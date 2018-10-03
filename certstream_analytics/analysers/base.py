@@ -25,9 +25,18 @@ class Debugger(Analyser):
     '''
     An experiment analyser to debug the received records.
     '''
+    def __init__(self):
+        '''
+        Keep track of the number of records so far for debugging purpose.
+        '''
+        self.count = 0
+
     def run(self, record):
         '''
         This is an experiment analyser and it will only print out the record
         to be analysed.
         '''
         logging.info(json.dumps(record))
+
+        # Update the number of records so far
+        self.count += 1

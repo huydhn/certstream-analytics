@@ -4,10 +4,10 @@ All hail [certstream](https://github.com/CaliDog/certstream-python)!!
 This module consumes the feed of certificates from certstream and does
 the heavy lifting.
 '''
+import sys
+import threading
 import certstream
 
-from analysers.base import Debugger
-from transformers.base import CertstreamTransformer
 
 class CertstreamAnalytics():
     '''
@@ -32,32 +32,48 @@ class CertstreamAnalytics():
         self.storage = storage
         self.analyser = analyser
 
+        self.stopped = True
+        self.thread = None
+
     def start(self):
         '''
         Start consuming data from certstream.
         '''
-        # pylint: disable=unnecessary-lambda
-        callback = lambda message, context: self._callback(message, context)
-
-        # The road goes ever on and on
-        certstream.listen_for_events(callback, url='wss://certstream.calidog.io')
-
-        # TODO Run this in a separate thread so that it can be stopped
-        # thread = threading.Thread(target=self._todo, args=(todo,)),
+        # Run the stream in a separate thread
+        self.thread = threading.Thread(target=self._consume)
         # So that it will be killed when the main thread stop
-        # thread.daemon = True
+        self.thread.daemon = True
+        self.thread.start()
 
     def stop(self):
         '''
         Stop consuming data from certstream.
         '''
-        pass
+        if self.stopped:
+            return
+
+        self.stopped = True
+        self.thread.join()
+
+    def _consume(self):
+        '''
+        Start consuming the data from certstream.
+        '''
+        # pylint: disable=unnecessary-lambda
+        callback = lambda message, context: self._callback(message, context)
+
+        self.stopped = False
+        # The road goes ever on and on
+        certstream.listen_for_events(callback, url='wss://certstream.calidog.io')
 
     # pylint: disable=unused-argument
     def _callback(self, message, context):
         '''
         The callback handler template itself.
         '''
+        if self.stopped:
+            sys.exit()
+
         if message['message_type'] == "heartbeat":
             return
 
@@ -75,20 +91,5 @@ class CertstreamAnalytics():
                 self.storage.save(transformed_message)
 
             if self.analyser and transformed_message:
-                # Run something here will you
+                # Run something here, will you
                 self.analyser.run(transformed_message)
-
-
-def run():
-    '''
-    Delete me after testing.
-    '''
-    debugger = Debugger()
-    transformer = CertstreamTransformer()
-
-    engine = CertstreamAnalytics(transformer=transformer, analyser=debugger)
-    engine.start()
-
-
-if __name__ == '__main__':
-    run()
