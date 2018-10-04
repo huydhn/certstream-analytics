@@ -2,6 +2,8 @@
 Transform the certificate data from certstream before passing it to the
 processing pipeline.
 '''
+import json
+import logging
 from abc import ABCMeta, abstractmethod
 
 
@@ -44,9 +46,17 @@ class CertstreamTransformer(Transformer):
         The format of the message from certstream can be found at their github
         documentation.
         '''
+        logging.debug(json.dumps(raw))
+
+        filtered = {
+            'cert_index': raw['data']['cert_index'],
+            'seen': raw['data']['seen'],
+        }
+
         interested_fields = ['not_before', 'not_after', 'all_domains']
 
         if raw['data']['leaf_cert']['all_domains']:
-            return {k: raw['data']['leaf_cert'][k] for k in interested_fields}
+            filtered.update({k: raw['data']['leaf_cert'][k] for k in interested_fields})
+            return filtered
 
         return None

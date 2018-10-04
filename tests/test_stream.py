@@ -4,8 +4,8 @@ Test consuming the data from the great certstream.
 import time
 import unittest
 
-from certstream_analytics.analysers.base import Debugger
-from certstream_analytics.transformers.base import CertstreamTransformer
+from certstream_analytics.analysers import Debugger
+from certstream_analytics.transformers import CertstreamTransformer
 from certstream_analytics.stream import CertstreamAnalytics
 
 
@@ -24,7 +24,6 @@ class CertstreamTest(unittest.TestCase):
 
         self.engine = CertstreamAnalytics(transformer=self.transformer,
                                           analyser=self.debugger)
-
 
     def test_consume(self):
         '''

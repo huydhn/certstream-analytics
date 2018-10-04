@@ -59,12 +59,10 @@ class CertstreamAnalytics():
         '''
         Start consuming the data from certstream.
         '''
-        # pylint: disable=unnecessary-lambda
-        callback = lambda message, context: self._callback(message, context)
-
         self.stopped = False
-        # The road goes ever on and on
-        certstream.listen_for_events(callback, url='wss://certstream.calidog.io')
+        # pylint: disable=unnecessary-lambda
+        certstream.listen_for_events(lambda m, c: self._callback(m, c),
+                                     url='wss://certstream.calidog.io')
 
     # pylint: disable=unused-argument
     def _callback(self, message, context):
