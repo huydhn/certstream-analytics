@@ -17,7 +17,6 @@ class ElasticsearchTest(unittest.TestCase):
     '''
     Test the way we save data into Elasticsearch.
     '''
-
     def setUp(self):
         '''
         Setup the client to consume from certstream and save the data into
@@ -53,6 +52,6 @@ class ElasticsearchTest(unittest.TestCase):
             response = self.search.query(query).execute()
 
             self.assertGreaterEqual(response.hits.total, 1,
-                             'The record has been indexed in Elasticsearch')
+                                    'The record has been indexed in Elasticsearch')
             self.assertIn(response.hits[0].domain, sample['data']['leaf_cert']['all_domains'],
                           'The correct record is returned')

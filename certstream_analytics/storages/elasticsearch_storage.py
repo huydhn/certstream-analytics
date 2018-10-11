@@ -4,7 +4,7 @@ later on.
 '''
 from datetime import datetime
 from elasticsearch_dsl import connections, analyzer, tokenizer
-from elasticsearch_dsl import Document, Date, Text
+from elasticsearch_dsl import Document, Date, Text, Keyword
 
 from .base import Storage
 
@@ -32,11 +32,11 @@ class ElasticsearchStorage(Storage):
         not_after = Date(default_timezone='UTC')
 
         # The domain and its alternative names
-        domain = Text(analyzer=ANALYZER)
-        san = Text(analyzer=ANALYZER)
+        domain = Text(analyzer=ANALYZER, fields={'raw': Keyword()})
+        san = Text(analyzer=ANALYZER, fields={'raw': Keyword()})
 
         # The issuer
-        chain = Text(analyzer=ANALYZER)
+        chain = Text(analyzer=ANALYZER, fields={'raw': Keyword()})
 
         class Index:
             '''
