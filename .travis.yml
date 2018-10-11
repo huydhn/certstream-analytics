@@ -8,6 +8,8 @@ install:
   - pip install codecov
   - pip install elasticsearch_dsl certstream
   - pip install -e .[tests]
+services:
+  - elasticsearch
 script:
   - pytest --pep8 -m pep8 certstream_analytics/
   - PYTHONPATH=$PWD:$PYTHONPATH pytest --cov=./ tests/
