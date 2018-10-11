@@ -3,6 +3,7 @@ Save some dummy records into Elasticsearch.
 '''
 import os
 import json
+import time
 import unittest
 
 from elasticsearch import Elasticsearch
@@ -40,6 +41,10 @@ class ElasticsearchTest(unittest.TestCase):
         for sample in samples:
             filtered = self.transformer.apply(sample)
             self.storage.save(filtered)
+
+        # Try to wait for a few seconds here so that Elasticsearch has enough
+        # time to index the data
+        time.sleep(5)
 
         for sample in samples:
             domain = sample['data']['leaf_cert']['all_domains'][0]
