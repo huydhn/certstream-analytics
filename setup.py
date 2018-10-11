@@ -17,8 +17,8 @@ setup(
     license='MIT',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    install_requires=['elasticsearch', 'certstream'],
-    tests_require=['unittest', 'coverage', 'nose', 'netaddr', 'pytest-pep8', 'pytest-cov', 'codecov'],
+    install_requires=['elasticsearch_dsl', 'certstream'],
+    tests_require=['unittest', 'coverage', 'nose', 'pytest-pep8', 'pytest-cov', 'codecov'],
     packages=find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",

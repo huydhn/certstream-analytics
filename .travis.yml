@@ -1,0 +1,15 @@
+language: python
+os:
+  - linux
+python:
+  - '3.6'
+install:
+  - pip install pytest-pep8 pytest-cov
+  - pip install codecov
+  - pip install elasticsearch_dsl certstream
+  - pip install -e .[tests]
+script:
+  - pytest --pep8 -m pep8 certstream_analytics/
+  - PYTHONPATH=$PWD:$PYTHONPATH pytest --cov=./ tests/
+after_success:
+  - codecov

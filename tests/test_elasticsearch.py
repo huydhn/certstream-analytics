@@ -47,7 +47,7 @@ class ElasticsearchTest(unittest.TestCase):
             query = Q('multi_match', query=domain, fields=['domain', 'san'])
             response = self.search.query(query).execute()
 
-            self.assertEqual(response.hits.total, 1,
+            self.assertGreaterEqual(response.hits.total, 1,
                              'The record has been indexed in Elasticsearch')
             self.assertIn(response.hits[0].domain, sample['data']['leaf_cert']['all_domains'],
                           'The correct record is returned')

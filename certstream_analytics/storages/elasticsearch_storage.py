@@ -8,10 +8,9 @@ from elasticsearch_dsl import Document, Date, Text
 
 from .base import Storage
 
-TOKENIZER = tokenizer('domain_tokenizer', 'path_hierarchy',
-                      delimiter='.', reverse=True)
-
-ANALYZER = analyzer('domain_analyzer', tokenizer=TOKENIZER, filter=['lowercase'])
+ANALYZER = analyzer('standard_analyzer',
+                    tokenizer='standard_tokenizer',
+                    filter=['lowercase'])
 
 
 # pylint: disable=too-few-public-methods
@@ -35,6 +34,9 @@ class ElasticsearchStorage(Storage):
         # The domain and its alternative names
         domain = Text(analyzer=ANALYZER)
         san = Text(analyzer=ANALYZER)
+
+        # The issuer
+        chain = Text(analyzer=ANALYZER)
 
         class Index:
             '''
@@ -73,5 +75,7 @@ class ElasticsearchStorage(Storage):
         # Elasticsearch will parse and index the domain and all its alternative names
         elasticsearch_record.domain = record['all_domains'][0]
         elasticsearch_record.san = record['all_domains'][1:]
+        # as well as the issuer organization
+        elasticsearch_record.chain = record['chain']
 
         elasticsearch_record.save()

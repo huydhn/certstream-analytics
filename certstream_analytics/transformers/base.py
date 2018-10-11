@@ -51,7 +51,12 @@ class CertstreamTransformer(Transformer):
         filtered = {
             'cert_index': raw['data']['cert_index'],
             'seen': raw['data']['seen'],
+            'chain': [],
         }
+
+        for hop in raw['data']['chain']:
+            # Only save the issuer organization for now
+            filtered['chain'].append(hop['subject']['O'])
 
         interested_fields = ['not_before', 'not_after', 'all_domains']
 
