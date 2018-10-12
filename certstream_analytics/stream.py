@@ -15,22 +15,31 @@ class CertstreamAnalytics():
     save it into various storages.
     '''
 
-    def __init__(self, transformer=None, storage=None, analyser=None):
+    def __init__(self, transformer=None, storage=None, analyser=None, reporter=None):
         '''
         This is the entry point of the whole module. It consumes data from
         certstream, transform it using a Transformer class, save it into
         a predefined storage (elasticsearch), and run the use-defined
         analysis.
 
-        The transformer can be None or a subclass of CertstreamTransformer.
+        The transformer can be None or a subclass of CertstreamTransformer. It
+        transform the raw data from certstream.
 
-        The storage can be None or a subclass of CertstreamStorage.
+        The storage can be None or a subclass of CertstreamStorage. A sample
+        kind of storage is Elasticsearch.
 
-        The analyser can be None or a subclass of CertstreamAnalyser.
+        The analyser can be None or a subclass of CertstreamAnalyser. It's
+        entirely up to the user to decide what to do here with the transformed
+        data from certstream.
+
+        The reporter, as its name implies, collects and publishes the analyser
+        result somewhere, for example, email notification. It will be a subclass
+        of CertstreamReporter.
         '''
         self.transformer = transformer
         self.storage = storage
         self.analyser = analyser
+        self.reporter = reporter
 
         self.stopped = True
         self.thread = None
@@ -89,5 +98,9 @@ class CertstreamAnalytics():
                 self.storage.save(transformed_message)
 
             if self.analyser and transformed_message:
-                # Run something here, will you
-                self.analyser.run(transformed_message)
+                # Run something analysis here
+                result = self.analyser.run(transformed_message)
+
+                if self.reporter and result:
+                    # and report the result
+                    self.reporter.publish(result)

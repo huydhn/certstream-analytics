@@ -53,7 +53,8 @@ class AhoCorasickDomainMatching(Analyser):
             # Similar to all domains in the list, the TLD will be stripped off
             ext = tldextract.extract(domain)
             # The match will be a tuple in the following format: (5, (0, 'google'))
-            matches = [m[1][1] for m in self.automaton.iter('.'.join(ext[:2])) if len(m[1][1]) >= AhoCorasickDomainMatching.MIN_MATCHING_LENGTH] # pylint: disable=line-too-long
+            matches = [m[1][1] for m in self.automaton.iter('.'.join(ext[:2]))
+                       if len(m[1][1]) >= AhoCorasickDomainMatching.MIN_MATCHING_LENGTH]
 
             if matches:
                 matches.sort(key=len)
