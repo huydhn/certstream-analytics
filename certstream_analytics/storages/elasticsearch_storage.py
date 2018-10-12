@@ -3,7 +3,7 @@ Save certstream data into Elasticsearch so that it can be queried by Kibana
 later on.
 '''
 from datetime import datetime
-from elasticsearch_dsl import connections, analyzer, tokenizer
+from elasticsearch_dsl import connections, analyzer
 from elasticsearch_dsl import Document, Date, Text, Keyword
 
 from .base import Storage

@@ -9,7 +9,7 @@ with open('README.md', 'r') as fh:
 
 setup(
     name='certstream-analytics',
-    version='0.1.1',
+    version='0.1.2',
     description='certstream + analytics',
     url='https://github.com/huydhn/certstream-analytics',
     author='Huy Do',
@@ -17,7 +17,7 @@ setup(
     license='MIT',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    install_requires=['elasticsearch_dsl', 'certstream'],
+    install_requires=['elasticsearch_dsl', 'certstream', 'pyahocorasick', 'tldextract'],
     tests_require=['unittest', 'coverage', 'nose', 'pytest-pep8', 'pytest-cov', 'codecov'],
     packages=find_packages(),
     classifiers=[

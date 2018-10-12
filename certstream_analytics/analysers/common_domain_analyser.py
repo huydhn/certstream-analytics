@@ -3,30 +3,61 @@ Verify the domain against the list of most popular domains from OpenDNS
 (https://github.com/opendns/public-domain-lists). Let's see how useful
 it is to prevent phishing domains.
 '''
+import tldextract
+import ahocorasick
+
 from .base import Analyser
 
 
 # pylint: disable=no-init,too-few-public-methods
-class CommonDomainMatching(Analyser):
+class AhoCorasickDomainMatching(Analyser):
     '''
     The domain and its SAN will be compared against the list of domains, for
-    exaple, the most popular domains from OpenDNS.
+    example, the most popular domains from OpenDNS.
     '''
+    # Get this number from the histogram of the length of all top domains
+    MIN_MATCHING_LENGTH = 3
+
     def __init__(self, domains):
         '''
+        Use Aho-Corasick to find the matching domain so we construct its Trie
+        here. Thought: How the f**k is com.com in the list?
         '''
-        self.domains = domains if domains else []
+        self.automaton = ahocorasick.Automaton()
+
+        for index, domain in enumerate(domains):
+            # Processing only the domain part so all sub-domains or TLDs will
+            # be ignored, for example:
+            #   - www.google.com becomes google
+            #   - www.google.co.uk becomes google
+            #   - del.icio.us becomes icio
+            ext = tldextract.extract(domain)
+            self.automaton.add_word(ext.domain, (index, ext.domain))
+
+        self.automaton.make_automaton()
 
     def run(self, record):
         '''
-        TODO: Find a good, O(log(n)) or less, solution to this problem.
-        '''
-        if not self.domains:
-            return None
+        use Aho-Corasick to find the matching domain. Check the time complexity
+        of this function later.
 
-        for legit_domain in self.domains:
-            for domain in record['all_domains']:
-                if legit_domain in domain:
-                    return domain
+        Tricky situation #1: When the string (domain) in the Trie is too short,
+        it could match many domains, for example, g.co or t.co.  So they need
+        to be ignored somehow.  Looking at the histogram of the length of all
+        domains in the list, there are only less than 100 domains with the
+        length of 2 or less.  So we choose to ignore those.  Also, we will
+        prefer longer match than a shorter one for now.
+        '''
+        # Check the domain and all its SAN
+        for domain in record['all_domains']:
+            # Similar to all domains in the list, the TLD will be stripped off
+            ext = tldextract.extract(domain)
+            # The match will be a tuple in the following format: (5, (0, 'google'))
+            matches = [m[1][1] for m in self.automaton.iter('.'.join(ext[:2])) if len(m[1][1]) >= AhoCorasickDomainMatching.MIN_MATCHING_LENGTH] # pylint: disable=line-too-long
+
+            if matches:
+                matches.sort(key=len)
+                # and we prefer the longest match for now
+                return matches[-1], domain
 
         return None
