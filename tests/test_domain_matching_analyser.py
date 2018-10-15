@@ -35,7 +35,7 @@ class DomainMatchingTest(unittest.TestCase):
                         'google.com',
                     ],
                 },
-                'expected': ('google', 'store.google.com'),
+                'expected': {'match': 'google', 'domain': 'store.google.com'},
                 'description': 'An exact match domain',
             },
 
@@ -45,7 +45,7 @@ class DomainMatchingTest(unittest.TestCase):
                         'www.facebook.com.msg40.site',
                     ],
                 },
-                'expected': ('facebook', 'www.facebook.com.msg40.site'),
+                'expected': {'match': 'facebook', 'domain': 'www.facebook.com.msg40.site'},
                 'description': 'A sample phishing domain with a sub-domain match',
             },
 
@@ -55,7 +55,7 @@ class DomainMatchingTest(unittest.TestCase):
                         'login-appleid.apple.com.managesuppport.co',
                     ],
                 },
-                'expected': ('apple', 'login-appleid.apple.com.managesuppport.co'),
+                'expected': {'match': 'apple', 'domain': 'login-appleid.apple.com.managesuppport.co'},
                 'description': 'A sample phishing domain with a partial string match',
             },
 
@@ -65,11 +65,21 @@ class DomainMatchingTest(unittest.TestCase):
                         'socket.io',
                     ],
                 },
-                'expected': None,
-                'description': 'An non-matching domain (not in the list of most popular domains)',
+                'expected': {},
+                'description': 'A non-matching domain (not in the list of most popular domains)',
             },
+
+            {
+                'data': {
+                    'all_domains': [
+                        'www.foobar2000.com',
+                    ],
+                },
+                'expected': {},
+                'description': 'A non-matching domain (excluded pattern)',
+            }
         ]
 
         for case in cases:
             got = self.analyser.run(case['data'])
-            self.assertEqual(got, case['expected'], case['description'])
+            self.assertDictEqual(got, case['expected'], case['description'])

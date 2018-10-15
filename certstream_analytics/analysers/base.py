@@ -23,7 +23,7 @@ class Analyser:
 
 class Debugger(Analyser):
     '''
-    An experiment analyser to debug the received records.
+    A dummy analyser for debugging.
     '''
     def __init__(self):
         '''
@@ -33,8 +33,7 @@ class Debugger(Analyser):
 
     def run(self, record):
         '''
-        This is an experiment analyser and it will only print out the record
-        to be analysed.
+        This is a dummy analyser that will only print out the record it processes.
         '''
         logging.info(json.dumps(record))
 

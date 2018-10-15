@@ -24,7 +24,7 @@ class Transformer:
 
 class PassthroughTransformer(Transformer):
     '''
-    An experiment transformer that doesn't do anything.
+    A dummy transformer that doesn't do anything.
     '''
     def apply(self, raw):
         '''
@@ -35,7 +35,7 @@ class PassthroughTransformer(Transformer):
 
 class CertstreamTransformer(Transformer):
     '''
-    Transform data from certstream into something readily usable by the
+    Transform data from certstream into something readily consumable by the
     processing pipeline.
     '''
     def apply(self, raw):

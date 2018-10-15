@@ -9,7 +9,7 @@ with open('README.md', 'r') as fh:
 
 setup(
     name='certstream-analytics',
-    version='0.1.2',
+    version='0.1.3',
     description='certstream + analytics',
     url='https://github.com/huydhn/certstream-analytics',
     author='Huy Do',

@@ -3,6 +3,8 @@ Verify the domain against the list of most popular domains from OpenDNS
 (https://github.com/opendns/public-domain-lists). Let's see how useful
 it is to prevent phishing domains.
 '''
+import json
+import logging
 import tldextract
 import ahocorasick
 
@@ -16,7 +18,14 @@ class AhoCorasickDomainMatching(Analyser):
     example, the most popular domains from OpenDNS.
     '''
     # Get this number from the histogram of the length of all top domains
-    MIN_MATCHING_LENGTH = 3
+    MIN_MATCHING_LENGTH = 5
+
+    # Some domains that don't work too well with tldextract and generate too
+    # many FPs
+    EXCLUDED_DOMAINS = {
+        'www',
+        'web',
+    }
 
     def __init__(self, domains):
         '''
@@ -32,6 +41,10 @@ class AhoCorasickDomainMatching(Analyser):
             #   - www.google.co.uk becomes google
             #   - del.icio.us becomes icio
             ext = tldextract.extract(domain)
+
+            if ext.domain in AhoCorasickDomainMatching.EXCLUDED_DOMAINS:
+                continue
+
             self.automaton.add_word(ext.domain, (index, ext.domain))
 
         self.automaton.make_automaton()
@@ -48,6 +61,8 @@ class AhoCorasickDomainMatching(Analyser):
         length of 2 or less.  So we choose to ignore those.  Also, we will
         prefer longer match than a shorter one for now.
         '''
+        logging.info(json.dumps(record))
+
         # Check the domain and all its SAN
         for domain in record['all_domains']:
             # Similar to all domains in the list, the TLD will be stripped off
@@ -59,6 +74,6 @@ class AhoCorasickDomainMatching(Analyser):
             if matches:
                 matches.sort(key=len)
                 # and we prefer the longest match for now
-                return matches[-1], domain
+                return {'domain': domain, 'match': matches[-1]}
 
-        return None
+        return {}

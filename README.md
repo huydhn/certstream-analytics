@@ -65,6 +65,10 @@ popular domains (I wonder how long it is going to last).
 
 ```python
 from certstream_analytics.analysers import AhoCorasickDomainMatching
+from certstream_analytics.reporter import FileReporter
+
+# Print the list of matching domains
+reporter = FileReporter('matching-results.txt')
 
 with open('opendns-top-domains.txt')) as fhandle:
     domains = [line.rstrip() for line in fhandle]
@@ -73,7 +77,8 @@ with open('opendns-top-domains.txt')) as fhandle:
 domain_matching_analyser = AhoCorasickDomainMatching(domains)
 
 consumer = CertstreamAnalytics(transformer=transformer,
-                               analyser=domain_matching_analyser)
+                               analyser=domain_matching_analyser,
+                               reporter=reporter)
 
 # Need to think about what to do with the matching result
 consumer.start()
