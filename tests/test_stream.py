@@ -13,7 +13,7 @@ class CertstreamTest(unittest.TestCase):
     '''
     Test the way we consume data from certstream.
     '''
-    DEFAULT_DELAY = 5
+    DEFAULT_DELAY = 10
 
     def setUp(self):
         '''
