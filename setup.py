@@ -17,7 +17,7 @@ setup(
     license='MIT',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    install_requires=['elasticsearch_dsl', 'certstream', 'pyahocorasick', 'tldextract'],
+    install_requires=['elasticsearch_dsl', 'certstream', 'pyahocorasick', 'tldextract', 'wordsegment'],
     tests_require=['unittest', 'coverage', 'nose', 'pytest-pep8', 'pytest-cov', 'codecov'],
     packages=find_packages(),
     classifiers=[

@@ -6,7 +6,7 @@ python:
 install:
   - pip install pytest-pep8 pytest-cov
   - pip install codecov
-  - pip install elasticsearch_dsl certstream pyahocorasick tldextract
+  - pip install elasticsearch_dsl certstream pyahocorasick tldextract wordsegment
   - pip install -e .[tests]
 services:
   - elasticsearch
