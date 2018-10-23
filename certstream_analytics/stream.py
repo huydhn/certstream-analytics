@@ -12,6 +12,7 @@ from certstream_analytics.analysers import Analyser
 from certstream_analytics.reporters import Reporter
 from certstream_analytics.storages import Storage
 
+
 class CertstreamAnalytics():
     '''
     Consume the feed of certificates from certstream, transform the data, and

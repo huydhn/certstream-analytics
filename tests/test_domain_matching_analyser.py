@@ -5,11 +5,12 @@ import os
 import unittest
 
 from certstream_analytics.analysers import AhoCorasickDomainMatching
+from certstream_analytics.analysers import WordSegmentationAnalyser
 
 
 class DomainMatchingTest(unittest.TestCase):
     '''
-    Test the common domain matching analyser.
+    Test all the common domain matching analysers.
     '''
     def setUp(self):
         '''
@@ -20,7 +21,8 @@ class DomainMatchingTest(unittest.TestCase):
         with open(os.path.join(current_dir, 'opendns-top-domains.txt')) as fhandle:
             domains = [line.rstrip() for line in fhandle]
 
-        self.analyser = AhoCorasickDomainMatching(domains)
+        self.ahocorasick_analyser = AhoCorasickDomainMatching(domains)
+        self.wordsegmentation_analyser = WordSegmentationAnalyser()
 
     def test_ahocorasick(self):
         '''
@@ -38,8 +40,9 @@ class DomainMatchingTest(unittest.TestCase):
                 'expected': [
                     {
                         'analyser': 'AhoCorasickDomainMatching',
-                        'match': 'google',
-                        'domain': 'store.google.com'
+                        'output': {
+                            'store.google.com': ['google'],
+                        },
                     },
                 ],
                 'description': 'An exact match domain',
@@ -54,8 +57,9 @@ class DomainMatchingTest(unittest.TestCase):
                 'expected': [
                     {
                         'analyser': 'AhoCorasickDomainMatching',
-                        'match': 'facebook',
-                        'domain': 'www.facebook.com.msg40.site'
+                        'output': {
+                            'www.facebook.com.msg40.site': ['facebook'],
+                        },
                     },
                 ],
                 'description': 'A sample phishing domain with a sub-domain match',
@@ -70,8 +74,9 @@ class DomainMatchingTest(unittest.TestCase):
                 'expected': [
                     {
                         'analyser': 'AhoCorasickDomainMatching',
-                        'match': 'apple',
-                        'domain': 'login-appleid.apple.com.managesuppport.co'
+                        'output': {
+                            'login-appleid.apple.com.managesuppport.co': ['apple'],
+                        },
                     },
                 ],
                 'description': 'A sample phishing domain with a partial string match',
@@ -99,5 +104,93 @@ class DomainMatchingTest(unittest.TestCase):
         ]
 
         for case in cases:
-            got = self.analyser.run(case['data'])
+            got = self.ahocorasick_analyser.run(case['data'])
+            self.assertListEqual(got['analysers'], case['expected'], case['description'])
+
+    def test_wordsegmentation(self):
+        '''
+        Try to segment some domains and check the result.
+        '''
+        cases = [
+            {
+                'data': {
+                    'all_domains': [
+                        'store.google.com',
+                        'google.com',
+                    ],
+                },
+                'expected': [
+                    {
+                        'analyser': 'WordSegmentationAnalyser',
+                        'output': {
+                            'store.google.com': ['store', 'google'],
+                            'google.com': ['google'],
+                        },
+                    },
+                ],
+                'description': 'A legit domain',
+            },
+
+            {
+                'data': {
+                    'all_domains': [
+                        'www.facebook.com.msg40.site',
+                    ],
+                },
+                'expected': [
+                    {
+                        'analyser': 'WordSegmentationAnalyser',
+                        'output': {
+                            'www.facebook.com.msg40.site': ['www', 'facebook', 'com', 'msg40'],
+                        },
+                    },
+                ],
+                'description': 'Word segmentation using the domain separator (dot)',
+            },
+
+            {
+                'data': {
+                    'all_domains': [
+                        'login-appleid.apple.com.managesuppport.co',
+                    ],
+                },
+                'expected': [
+                    {
+                        'analyser': 'WordSegmentationAnalyser',
+                        'output': {
+                            'login-appleid.apple.com.managesuppport.co': [
+                                'login',
+                                'apple',
+                                'id',
+                                'apple',
+                                'com',
+                                'manage',
+                                'suppport'
+                            ],
+                        },
+                    },
+                ],
+                'description': 'Word segmentation using dictionary',
+            },
+
+            {
+                'data': {
+                    'all_domains': [
+                        'arch.mappleonline.com',
+                    ],
+                },
+                'expected': [
+                    {
+                        'analyser': 'WordSegmentationAnalyser',
+                        'output': {
+                            'arch.mappleonline.com': ['arch', 'm', 'apple', 'online'],
+                        },
+                    },
+                ],
+                'description': 'Failed to segment the word correctly',
+            },
+        ]
+
+        for case in cases:
+            got = self.wordsegmentation_analyser.run(case['data'])
             self.assertListEqual(got['analysers'], case['expected'], case['description'])
