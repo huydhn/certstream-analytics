@@ -10,7 +10,7 @@ import time
 
 from certstream_analytics.analysers import AhoCorasickDomainMatching, Debugger
 from certstream_analytics.transformers import CertstreamTransformer
-from certstream_analytics.reporter import FileReporter
+from certstream_analytics.reporters import FileReporter
 from certstream_analytics.storages import ElasticsearchStorage
 from certstream_analytics.stream import CertstreamAnalytics
 

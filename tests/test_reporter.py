@@ -5,7 +5,7 @@ import json
 import tempfile
 import unittest
 
-from certstream_analytics.reporter import FileReporter
+from certstream_analytics.reporters import FileReporter
 
 
 class FileReporterTest(unittest.TestCase):
@@ -25,17 +25,44 @@ class FileReporterTest(unittest.TestCase):
         '''
         cases = [
             {
-                'report': {'match': 'google', 'domain': 'store.google.com'},
+                'report': {
+                    'all_domains': ['store.google.com', 'google.com'],
+                    'analysers': [
+                        {
+                            'analyser': 'AhoCorasickDomainMatching',
+                            'domain': 'store.google.com',
+                            'match': 'google',
+                        },
+                    ],
+                },
                 'description': 'Report an exact match domain',
             },
 
             {
-                'report': {'match': 'facebook', 'domain': 'www.facebook.com.msg40.site'},
+                'report': {
+                    'all_domains': ['www.facebook.com.msg40.site'],
+                    'analysers': [
+                        {
+                            'analyser': 'AhoCorasickDomainMatching',
+                            'domain': 'www.facebook.com.msg40.site',
+                            'match': 'facebook',
+                        },
+                    ],
+                },
                 'description': 'Report a phishing domain with a sub-domain match',
             },
 
             {
-                'report': {'match': 'apple', 'domain': 'login-appleid.apple.com.managesuppport.co'},
+                'report': {
+                    'all_domains': ['login-appleid.apple.com.managesuppport.co'],
+                    'analysers': [
+                        {
+                            'analyser': 'AhoCorasickDomainMatching',
+                            'domain': 'login-appleid.apple.com.managesuppport.co',
+                            'match': 'apple',
+                        },
+                    ],
+                },
                 'description': 'Report a phishing domain with a partial string match',
             },
 

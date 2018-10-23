@@ -35,7 +35,13 @@ class DomainMatchingTest(unittest.TestCase):
                         'google.com',
                     ],
                 },
-                'expected': {'match': 'google', 'domain': 'store.google.com'},
+                'expected': [
+                    {
+                        'analyser': 'AhoCorasickDomainMatching',
+                        'match': 'google',
+                        'domain': 'store.google.com'
+                    },
+                ],
                 'description': 'An exact match domain',
             },
 
@@ -45,7 +51,13 @@ class DomainMatchingTest(unittest.TestCase):
                         'www.facebook.com.msg40.site',
                     ],
                 },
-                'expected': {'match': 'facebook', 'domain': 'www.facebook.com.msg40.site'},
+                'expected': [
+                    {
+                        'analyser': 'AhoCorasickDomainMatching',
+                        'match': 'facebook',
+                        'domain': 'www.facebook.com.msg40.site'
+                    },
+                ],
                 'description': 'A sample phishing domain with a sub-domain match',
             },
 
@@ -55,7 +67,13 @@ class DomainMatchingTest(unittest.TestCase):
                         'login-appleid.apple.com.managesuppport.co',
                     ],
                 },
-                'expected': {'match': 'apple', 'domain': 'login-appleid.apple.com.managesuppport.co'},
+                'expected': [
+                    {
+                        'analyser': 'AhoCorasickDomainMatching',
+                        'match': 'apple',
+                        'domain': 'login-appleid.apple.com.managesuppport.co'
+                    },
+                ],
                 'description': 'A sample phishing domain with a partial string match',
             },
 
@@ -65,7 +83,7 @@ class DomainMatchingTest(unittest.TestCase):
                         'socket.io',
                     ],
                 },
-                'expected': {},
+                'expected': [],
                 'description': 'A non-matching domain (not in the list of most popular domains)',
             },
 
@@ -75,11 +93,11 @@ class DomainMatchingTest(unittest.TestCase):
                         'www.foobar2000.com',
                     ],
                 },
-                'expected': {},
+                'expected': [],
                 'description': 'A non-matching domain (excluded pattern)',
             }
         ]
 
         for case in cases:
             got = self.analyser.run(case['data'])
-            self.assertDictEqual(got, case['expected'], case['description'])
+            self.assertListEqual(got['analysers'], case['expected'], case['description'])

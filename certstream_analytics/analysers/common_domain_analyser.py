@@ -63,6 +63,9 @@ class AhoCorasickDomainMatching(Analyser):
         '''
         logging.info(json.dumps(record))
 
+        if 'analysers' not in record:
+            record['analysers'] = []
+
         # Check the domain and all its SAN
         for domain in record['all_domains']:
             # Similar to all domains in the list, the TLD will be stripped off
@@ -73,7 +76,15 @@ class AhoCorasickDomainMatching(Analyser):
 
             if matches:
                 matches.sort(key=len)
-                # and we prefer the longest match for now
-                return {'domain': domain, 'match': matches[-1]}
+                # We prefer longer match
+                result = {
+                    'analyser': type(self).__name__,
+                    'domain': domain,
+                    'match': matches[-1],
+                }
 
-        return {}
+                record['analysers'].append(result)
+                # Only keep the first match for now
+                break
+
+        return record

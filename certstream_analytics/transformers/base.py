@@ -52,6 +52,9 @@ class CertstreamTransformer(Transformer):
             'cert_index': raw['data']['cert_index'],
             'seen': raw['data']['seen'],
             'chain': [],
+
+            # The analyser result will be stored here later on
+            'analysers': [],
         }
 
         for hop in raw['data']['chain']:
