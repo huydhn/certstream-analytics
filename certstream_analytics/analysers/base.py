@@ -16,7 +16,33 @@ class Analyser:
     @abstractmethod
     def run(self, record):
         '''
-        Move along, nothing to see here.
+        In normal cases, an analyser will process the record, save the result
+        into the record, and then return the updated record so that the next
+        analyser can choose what to do next. Therefore, the structure of the
+        record comes from CertstreamTransformer class as follows:
+
+            {
+                # These fields are extracted from certstream
+                cert_index: INTEGER,
+                seen: TIMESTAMP,
+                chain: [
+                    ORGANIZATION
+                ],
+                not_before: TIMESTAMP,
+                not_after: TIMESTAMP,
+                all_domains: [
+                    SAN
+                ],
+
+                # This is a place holder field which are used later by the
+                # analysers. Each analyser will append its result here.
+                analysers: [
+                    {
+                        analyser: ANALYSER NAME,
+                        output: ANYTHING GOESE HERE,
+                    },
+                ],
+            }
         '''
         pass
 
@@ -39,3 +65,13 @@ class Debugger(Analyser):
 
         # Update the number of records so far
         self.count += 1
+
+        if 'analysers' not in record:
+            record['analysers'] = []
+
+        record['analysers'].append({
+            'analyser': type(self).__name__,
+            'output': self.count,
+        })
+
+        return record

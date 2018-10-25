@@ -6,6 +6,7 @@ import unittest
 
 from certstream_analytics.analysers import AhoCorasickDomainMatching
 from certstream_analytics.analysers import WordSegmentationAnalyser
+from certstream_analytics.analysers import DomainMatching, DomainMatchingOption
 
 
 class DomainMatchingTest(unittest.TestCase):
@@ -23,6 +24,7 @@ class DomainMatchingTest(unittest.TestCase):
 
         self.ahocorasick_analyser = AhoCorasickDomainMatching(domains)
         self.wordsegmentation_analyser = WordSegmentationAnalyser()
+        self.domain_matching_analyser = DomainMatching()
 
     def test_ahocorasick(self):
         '''
@@ -41,7 +43,7 @@ class DomainMatchingTest(unittest.TestCase):
                     {
                         'analyser': 'AhoCorasickDomainMatching',
                         'output': {
-                            'store.google.com': ['google'],
+                            'store.google.com': ['google.com'],
                         },
                     },
                 ],
@@ -58,7 +60,7 @@ class DomainMatchingTest(unittest.TestCase):
                     {
                         'analyser': 'AhoCorasickDomainMatching',
                         'output': {
-                            'www.facebook.com.msg40.site': ['facebook'],
+                            'www.facebook.com.msg40.site': ['facebook.com'],
                         },
                     },
                 ],
@@ -75,7 +77,7 @@ class DomainMatchingTest(unittest.TestCase):
                     {
                         'analyser': 'AhoCorasickDomainMatching',
                         'output': {
-                            'login-appleid.apple.com.managesuppport.co': ['apple'],
+                            'login-appleid.apple.com.managesuppport.co': ['apple.com'],
                         },
                     },
                 ],
@@ -123,8 +125,8 @@ class DomainMatchingTest(unittest.TestCase):
                     {
                         'analyser': 'WordSegmentationAnalyser',
                         'output': {
-                            'store.google.com': ['store', 'google'],
-                            'google.com': ['google'],
+                            'store.google.com': ['store', 'google', 'com'],
+                            'google.com': ['google', 'com'],
                         },
                     },
                 ],
@@ -141,7 +143,7 @@ class DomainMatchingTest(unittest.TestCase):
                     {
                         'analyser': 'WordSegmentationAnalyser',
                         'output': {
-                            'www.facebook.com.msg40.site': ['www', 'facebook', 'com', 'msg40'],
+                            'www.facebook.com.msg40.site': ['www', 'facebook', 'com', 'msg40', 'site'],
                         },
                     },
                 ],
@@ -165,7 +167,8 @@ class DomainMatchingTest(unittest.TestCase):
                                 'apple',
                                 'com',
                                 'manage',
-                                'suppport'
+                                'suppport',
+                                'co'
                             ],
                         },
                     },
@@ -183,7 +186,7 @@ class DomainMatchingTest(unittest.TestCase):
                     {
                         'analyser': 'WordSegmentationAnalyser',
                         'output': {
-                            'arch.mappleonline.com': ['arch', 'm', 'apple', 'online'],
+                            'arch.mappleonline.com': ['arch', 'm', 'apple', 'online', 'com'],
                         },
                     },
                 ],
@@ -194,3 +197,129 @@ class DomainMatchingTest(unittest.TestCase):
         for case in cases:
             got = self.wordsegmentation_analyser.run(case['data'])
             self.assertListEqual(got['analysers'], case['expected'], case['description'])
+
+    def test_domain_matching(self):
+        '''
+        Combine the result of all domain matching analysers into one.
+        '''
+        cases = [
+            {
+                'data': {
+                    'all_domains': [
+                        'store.google.com',
+                        'google.com',
+                    ],
+
+                    'analysers': [
+                        {
+                            'analyser': 'AhoCorasickDomainMatching',
+                            'output': {
+                                'store.google.com': ['google.com'],
+                            },
+                        },
+
+                        {
+                            'analyser': 'WordSegmentationAnalyser',
+                            'output': {
+                                'store.google.com': ['store', 'google', 'com'],
+                                'google.com': ['google', 'com'],
+                            },
+                        },
+                    ],
+                },
+                'expected': [
+                    {
+                        'analyser': 'AhoCorasickDomainMatching',
+                        'output': {
+                            'store.google.com': ['google.com'],
+                        },
+                    },
+
+                    {
+                        'analyser': 'WordSegmentationAnalyser',
+                        'output': {
+                            'store.google.com': ['store', 'google', 'com'],
+                            'google.com': ['google', 'com'],
+                        },
+                    },
+
+                    {
+                        'analyser': 'DomainMatching',
+                        'output': {
+                            'store.google.com': ['google.com'],
+                        },
+                    },
+                ],
+                'description': 'A legit domain',
+            },
+
+            {
+                'data': {
+                    'all_domains': [
+                        'login-appleid.apple.com.managesuppport.co',
+                    ],
+
+                    'analysers': [
+                        {
+                            'analyser': 'AhoCorasickDomainMatching',
+                            'output': {
+                                'login-appleid.apple.com.managesuppport.co': ['apple.com'],
+                            },
+                        },
+
+                        {
+                            'analyser': 'WordSegmentationAnalyser',
+                            'output': {
+                                'login-appleid.apple.com.managesuppport.co': [
+                                    'login',
+                                    'apple',
+                                    'id',
+                                    'apple',
+                                    'com',
+                                    'manage',
+                                    'suppport'
+                                ],
+                            },
+                        },
+                    ],
+                },
+                'expected': [
+                    {
+                        'analyser': 'AhoCorasickDomainMatching',
+                        'output': {
+                            'login-appleid.apple.com.managesuppport.co': ['apple.com'],
+                        },
+                    },
+
+                    {
+                        'analyser': 'WordSegmentationAnalyser',
+                        'output': {
+                            'login-appleid.apple.com.managesuppport.co': [
+                                'login',
+                                'apple',
+                                'id',
+                                'apple',
+                                'com',
+                                'manage',
+                                'suppport'
+                            ],
+                        },
+                    },
+
+                    {
+                        'analyser': 'DomainMatching',
+                        'output': {
+                            'login-appleid.apple.com.managesuppport.co': ['apple.com']
+                        },
+                    },
+                ],
+                'description': 'Find a matching phishing domain (include TLD, same order)',
+            },
+
+            # Need more test cases here for other matching algorithms besides the
+            # default one
+        ]
+
+        for case in cases:
+            got = self.domain_matching_analyser.run(case['data'])
+            self.assertCountEqual(got['analysers'], case['expected'], case['description'])

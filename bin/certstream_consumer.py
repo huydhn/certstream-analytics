@@ -8,7 +8,10 @@ import signal
 import sys
 import time
 
-from certstream_analytics.analysers import AhoCorasickDomainMatching, Debugger
+from certstream_analytics.analysers import Debugger
+from certstream_analytics.analysers import AhoCorasickDomainMatching
+from certstream_analytics.analysers import WordSegmentationAnalyser
+from certstream_analytics.analysers import DomainMatching, DomainMatchingOption
 from certstream_analytics.transformers import CertstreamTransformer
 from certstream_analytics.reporters import FileReporter
 from certstream_analytics.storages import ElasticsearchStorage
@@ -26,7 +29,6 @@ def exit_gracefully(signum, stack):
     global DONE
     DONE = True
 
-
 def init_ahocorasick_analyser(params):
     '''
     Initialize the AhoCorasick analyser here cause this could not be fitted
@@ -38,10 +40,16 @@ def init_ahocorasick_analyser(params):
 
     return AhoCorasickDomainMatching(domains=domains)
 
+def init_domain_matching_analyser(params):
+    '''
+    '''
+    return DomainMatching(include_tld=True, option=DomainMatchingOption.ORDER_MATCH)
 
 SUPPORTED_ANALYSERS = {
     'debugger': lambda params: Debugger(),
     'ahocorasick': init_ahocorasick_analyser,
+    'word-segment': WordSegmentationAnalyser(),
+    'domain-matching': ,
 }
 
 SUPPORTED_REPORTERS = {

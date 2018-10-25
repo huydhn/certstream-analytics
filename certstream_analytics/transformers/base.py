@@ -40,11 +40,35 @@ class CertstreamTransformer(Transformer):
     '''
     def apply(self, raw):
         '''
-        So far, we are only interested in the domain names, the timestamps, and
-        probably the content of the subject as well.
-
         The format of the message from certstream can be found at their github
         documentation.
+
+        So far, we are only interested in the domain names, the timestamps, and
+        probably the content of the subject. So the returned stucture is as
+        follows:
+
+            {
+                # These fields are extracted from certstream
+                cert_index: INTEGER,
+                seen: TIMESTAMP,
+                chain: [
+                    ORGANIZATION
+                ],
+                not_before: TIMESTAMP,
+                not_after: TIMESTAMP,
+                all_domains: [
+                    SAN
+                ],
+
+                # This is a place holder field which are used later by the
+                # analysers. Each analyser will append its result here.
+                analysers: [
+                    {
+                        analyser: ANALYSER NAME,
+                        output: ANYTHING GOESE HERE,
+                    },
+                ],
+            }
         '''
         logging.debug(json.dumps(raw))
 
