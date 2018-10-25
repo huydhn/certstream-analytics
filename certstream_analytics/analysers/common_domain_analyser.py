@@ -94,8 +94,7 @@ class AhoCorasickDomainMatching(Analyser):
         return record
 
 
-# pylint: disable=too-few-public-methods
-class WordSegmentationAnalyser(Analyser):
+class WordSegmentation(Analyser):
     '''
     Perform word segmentation of all the SAN domains as an attempt to make sense
     of their names. For example, both arch.mappleonline.com and apple-verifyupdate.serveftp.com
@@ -152,6 +151,7 @@ class WordSegmentationAnalyser(Analyser):
 
         return record
 
+
 class DomainMatchingOption(Enum):
     '''
     Control how strict we want to do our matching.
@@ -161,9 +161,9 @@ class DomainMatchingOption(Enum):
     SUBSET_MATCH = 0
 
     # Similar but use in instead of issubset so that the order is preserved
-    ORDER_MATCH = 3
+    ORDER_MATCH = 1
 
-# pylint: disable=too-few-public-methods
+
 class DomainMatching(Analyser):
     '''
     This is the first example of the new group of meta analysers which are used
@@ -183,7 +183,6 @@ class DomainMatching(Analyser):
             DomainMatchingOption.ORDER_MATCH: list,
         }[option]
 
-    # pylint: disable=too-many-locals
     def run(self, record):
         '''
         Note that a meta-analyser will need to run after other analysers have
@@ -194,7 +193,7 @@ class DomainMatching(Analyser):
 
         analysers = {
             AhoCorasickDomainMatching.__name__: {},
-            WordSegmentationAnalyser.__name__: {},
+            WordSegmentation.__name__: {},
         }
 
         for analyser in record['analysers']:
@@ -206,12 +205,28 @@ class DomainMatching(Analyser):
             analysers[name] = analyser['output']
 
         # Check that all outputs are there before continuing
-        if not analysers[AhoCorasickDomainMatching.__name__] or not analysers[WordSegmentationAnalyser.__name__]:
+        if not analysers[AhoCorasickDomainMatching.__name__] or not analysers[WordSegmentation.__name__]:
             return record
 
+        results = self._match(analysers[AhoCorasickDomainMatching.__name__],
+                              analysers[WordSegmentation.__name__])
+
+        if results:
+            record['analysers'].append({
+                'analyser': type(self).__name__,
+                'output': results,
+            })
+
+        return record
+
+    def _match(self, ahocorasick_output, segmentation_output):
+        '''
+        Use internally by the run function to combine AhoCorasick and WordSegmentation
+        results.
+        '''
         results = {}
         # Check all the matching domains reported by AhoCorasick analyser
-        for ahocorasick_match, domains in analysers[AhoCorasickDomainMatching.__name__].items():
+        for match, domains in ahocorasick_output.items():
             # The result of AhoCorasick matcher is a list of matching domains, for example,
             #
             #   {
@@ -221,13 +236,20 @@ class DomainMatching(Analyser):
             #       },
             #   },
             #
-            if ahocorasick_match not in analysers[WordSegmentationAnalyser.__name__]:
+            if match not in segmentation_output:
                 continue
 
-            phish = self.option(analysers[WordSegmentationAnalyser.__name__][ahocorasick_match])
+            phish = self.option(segmentation_output[match])
+            match_ext = tldextract.extract(match)
 
             for domain in domains:
                 ext = tldextract.extract(domain)
+
+                # This record is from a legitimate source, for example, agrosupport.zendesk.com
+                # will match with zendesk.com. In our case, we don't really care about this so
+                # it will be ignored and not reported as a match.
+                if ext[1:] == match_ext[1:]:
+                    continue
 
                 tmp = []
                 # Intuitively, it will be more accurate if we choose to include the TLD here.
@@ -242,17 +264,11 @@ class DomainMatching(Analyser):
                 legit = self.option(tmp)
 
                 if (isinstance(phish, set) and legit.issubset(phish)) or \
-                   (isinstance(phish, list) and '.'.join(legit) in '.'.join(phish)):
+                   (isinstance(phish, list) and '.{}'.format('.'.join(legit)) in '.'.join(phish)):
                     # Found a possible phishing domain
-                    if ahocorasick_match not in results:
-                        results[ahocorasick_match] = []
+                    if match not in results:
+                        results[match] = []
 
-                    results[ahocorasick_match].append(domain)
+                    results[match].append(domain)
 
-        if results:
-            record['analysers'].append({
-                'analyser': type(self).__name__,
-                'output': results,
-            })
-
-        return record
+        return results

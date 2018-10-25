@@ -23,7 +23,7 @@ class CertstreamTest(unittest.TestCase):
         self.transformer = CertstreamTransformer()
 
         self.engine = CertstreamAnalytics(transformer=self.transformer,
-                                          analyser=self.debugger)
+                                          analysers=self.debugger)
 
     def test_consume(self):
         '''

@@ -19,7 +19,7 @@ class CertstreamAnalytics():
     save it into various storages.
     '''
 
-    def __init__(self, transformer=None, storage=None, analyser=None, reporter=None):
+    def __init__(self, transformer=None, storages=None, analysers=None, reporters=None):
         '''
         This is the entry point of the whole module. It consumes data from
         certstream, transform it using a Transformer class, save it into
@@ -42,9 +42,9 @@ class CertstreamAnalytics():
         '''
         self.transformer = transformer
 
-        self.analyser = []
-        self.reporter = []
-        self.storage = []
+        self.analysers = []
+        self.reporters = []
+        self.storages = []
 
         def _init_member(member, value, kind):
             '''
@@ -60,9 +60,9 @@ class CertstreamAnalytics():
                     if not isinstance(type_check, kind):
                         raise TypeError('Invalid {} type: {}'.format(member, type(type_check).__name__))
 
-        _init_member('analyser', analyser, Analyser)
-        _init_member('reporter', reporter, Reporter)
-        _init_member('storage', storage, Storage)
+        _init_member('analysers', analysers, Analyser)
+        _init_member('reporters', reporters, Reporter)
+        _init_member('storages', storages, Storage)
 
         self.stopped = True
         self.thread = None
@@ -115,23 +115,23 @@ class CertstreamAnalytics():
             else:
                 transformed_message = message
 
-            if self.storage and transformed_message:
+            if self.storages and transformed_message:
                 # Save the message into a more permanent storage. May be we should
                 # support multiple storages in parallel here
-                for storage in self.storage:
+                for storage in self.storages:
                     storage.save(transformed_message)
 
-            if self.analyser:
+            if self.analysers:
                 # Note that the order of analysers is extremely important cause the
                 # output of an analyser will be come the input of the next analyser
-                for analyser in self.analyser:
+                for analyser in self.analysers:
                     if not transformed_message:
                         break
 
                     # Run something here
                     transformed_message = analyser.run(transformed_message)
 
-                if self.reporter and transformed_message:
+                if self.reporters and transformed_message:
                     # and report the final result
-                    for reporter in self.reporter:
+                    for reporter in self.reporters:
                         reporter.publish(transformed_message)
