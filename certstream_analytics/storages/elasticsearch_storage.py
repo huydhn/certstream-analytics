@@ -75,7 +75,5 @@ class ElasticsearchStorage(Storage):
         # Elasticsearch will parse and index the domain and all its alternative names
         elasticsearch_record.domain = record['all_domains'][0]
         elasticsearch_record.san = record['all_domains'][1:]
-        # as well as the issuer organization
-        elasticsearch_record.chain = record['chain']
 
         elasticsearch_record.save()
