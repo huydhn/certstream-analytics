@@ -5,11 +5,15 @@ it is to prevent phishing domains.
 '''
 from enum import Enum
 
+import re
 import tldextract
 import wordsegment
 import ahocorasick
 
 from .base import Analyser
+
+# Take a histogram here and find out the suitable value for this
+BULK_DOMAIN_THRESHOLD = 15
 
 
 # pylint: disable=too-few-public-methods
@@ -24,9 +28,12 @@ class AhoCorasickDomainMatching(Analyser):
     # Some domains that don't work too well with tldextract and generate too
     # many FPs
     EXCLUDED_DOMAINS = {
-        'www',
-        'web',
+        'www': 1,
+        'web': 1,
     }
+
+    # Some common domain parts that cause too many FP
+    IGNORED_PARTS = r'^(autodiscover\.|cpanel\.)'
 
     def __init__(self, domains):
         '''
@@ -37,7 +44,7 @@ class AhoCorasickDomainMatching(Analyser):
         self.domains = {}
 
         for index, domain in enumerate(domains):
-            # Processing only the domain part so all sub-domains or TLDs will
+            # Processing only the domain part.  All sub-domains or TLDs will
             # be ignored, for example:
             #   - www.google.com becomes google
             #   - www.google.co.uk becomes google
@@ -70,6 +77,9 @@ class AhoCorasickDomainMatching(Analyser):
         results = {}
         # Check the domain and all its SAN
         for domain in record['all_domains']:
+            # Remove some FP-prone parts
+            domain = re.sub(AhoCorasickDomainMatching.IGNORED_PARTS, '', domain)
+
             # Similar to all domains in the list, the TLD will be stripped off
             ext = tldextract.extract(domain)
             # The match will be a tuple in the following format: (5, (0, 'google'))
@@ -114,6 +124,17 @@ class WordSegmentation(Analyser):
 
     Let's see what they can do, take it away!
     '''
+    # Some common stop words that are in the list of most popular domains
+    STOPWORDS = {
+        'app': 1,
+        'inc': 1,
+        'box': 1,
+        'health': 1,
+        'home': 1,
+        'space': 1,
+        'cars': 1,
+    }
+
     def __init__(self):
         '''
         Just load the wordsegment package, whatever it is.
@@ -139,7 +160,7 @@ class WordSegmentation(Analyser):
             # will become ['co', 'uk']. Let see if this works out.
             for part in ext[:]:
                 for token in part.split('.'):
-                    words.extend(wordsegment.segment(token))
+                    words.extend([w for w in wordsegment.segment(token) if w not in WordSegmentation.STOPWORDS])
 
             results[domain] = words
 
@@ -194,12 +215,18 @@ class DomainMatching(Analyser):
         analysers = {
             AhoCorasickDomainMatching.__name__: {},
             WordSegmentation.__name__: {},
+            BulkDomainMarker.__name__: {},
         }
 
         for analyser in record['analysers']:
             name = analyser['analyser']
 
             if name not in analysers:
+                continue
+
+            if name == BulkDomainMarker.__name__ and analyser['output']:
+                # Skip bulk record and deal with it later, with such large
+                # number of SAN name, it's bound to be a match (FP)
                 continue
 
             analysers[name] = analyser['output']
@@ -272,3 +299,36 @@ class DomainMatching(Analyser):
                     results[match].append(domain)
 
         return results
+
+
+class BulkDomainMarker(Analyser):
+    '''
+    Mark the record that has tons of SAN domains in it. Most of the time, they are
+    completely unrelated domains and probably the result of some bulk registration
+    process. Benign or not, they are still suspicious and probably spam. We can also
+    verify the similarity among these domains. A lower similarity score means these
+    domains are totally unrelated.
+    '''
+    def __init__(self, threshold=BULK_DOMAIN_THRESHOLD):
+        '''
+        Set the threshold to mark the record as a bulk record.
+        '''
+        self.threshold = threshold
+
+    def run(self, record):
+        '''
+        See if the record is a bulk record. We will just use the threshold as
+        the indicator for now. So if a record has more SAN names than the
+        threshold, it is a bulk record.
+        '''
+        if 'analysers' not in record:
+            record['analysers'] = []
+
+        is_bulked = True if len(record['all_domains']) >= self.threshold else False
+
+        record['analysers'].append({
+            'analyser': type(self).__name__,
+            'output': is_bulked,
+        })
+
+        return record

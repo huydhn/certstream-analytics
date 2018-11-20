@@ -98,7 +98,17 @@ class DomainMatchingTest(unittest.TestCase):
                 },
                 'expected': [],
                 'description': 'A non-matching domain (excluded pattern)',
-            }
+            },
+
+            {
+                'data': {
+                    'all_domains': [
+                        'autodiscover.blablabla.com',
+                    ],
+                },
+                'expected': [],
+                'description': 'Match a ignored pattern',
+            },
         ]
 
         for case in cases:
@@ -189,6 +199,23 @@ class DomainMatchingTest(unittest.TestCase):
                     },
                 ],
                 'description': 'Failed to segment the word correctly',
+            },
+
+            {
+                'data': {
+                    'all_domains': [
+                        'www.freybrothersinc.com',
+                    ],
+                },
+                'expected': [
+                    {
+                        'analyser': 'WordSegmentation',
+                        'output': {
+                            'www.freybrothersinc.com': ['www', 'frey', 'brothers', 'com'],
+                        },
+                    },
+                ],
+                'description': 'Ignore certain stop words (inc) when doing segmentation',
             },
         ]
 

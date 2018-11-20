@@ -13,6 +13,7 @@ import time
 from certstream_analytics.analysers import AhoCorasickDomainMatching
 from certstream_analytics.analysers import WordSegmentation
 from certstream_analytics.analysers import DomainMatching, DomainMatchingOption
+from certstream_analytics.analysers import BulkDomainMarker
 from certstream_analytics.transformers import CertstreamTransformer
 from certstream_analytics.reporters import FileReporter
 from certstream_analytics.storages import ElasticsearchStorage
@@ -55,6 +56,7 @@ def init_analysers(domains_file, include_tld, matching_option):
     return [
         AhoCorasickDomainMatching(domains=domains),
         WordSegmentation(),
+        BulkDomainMarker(),
         DomainMatching(include_tld=include_tld, option=matching_option),
     ]
 

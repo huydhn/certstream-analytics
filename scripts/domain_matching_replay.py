@@ -12,6 +12,7 @@ import sys
 from certstream_analytics.analysers import AhoCorasickDomainMatching
 from certstream_analytics.analysers import WordSegmentation
 from certstream_analytics.analysers import DomainMatching, DomainMatchingOption
+from certstream_analytics.analysers import BulkDomainMarker
 from certstream_analytics.reporters import FileReporter
 from certstream_analytics.storages import ElasticsearchStorage
 
@@ -41,6 +42,7 @@ def init_analysers(domains_file, include_tld, matching_option):
     return [
         AhoCorasickDomainMatching(domains=domains),
         WordSegmentation(),
+        BulkDomainMarker(),
         DomainMatching(include_tld=include_tld, option=matching_option),
     ]
 
@@ -72,7 +74,7 @@ Consume data from certstream and does its magic.
 
     parser.add_argument('--storage-host', default='localhost:9200',
                         help='set the storage host')
-    parser.add_argument('-s', '--storage', default='elasticsearch',
+    parser.add_argument('-s', '--storage',
                         help='choose the storage type (elasticsearch)')
 
     parser.add_argument('--report-location',
@@ -123,7 +125,8 @@ Consume data from certstream and does its magic.
             except json.decoder.JSONDecodeError:
                 continue
 
-            storage.save(record)
+            if storage:
+                storage.save(record)
 
             for analyser in analysers:
                 # Run something here
