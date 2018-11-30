@@ -6,6 +6,8 @@ it is to prevent phishing domains.
 from enum import Enum
 
 import re
+import math
+import enchant
 import tldextract
 import wordsegment
 import ahocorasick
@@ -133,6 +135,7 @@ class WordSegmentation(Analyser):
         'home': 1,
         'space': 1,
         'cars': 1,
+        'nature': 1,
     }
 
     def __init__(self):
@@ -226,7 +229,7 @@ class DomainMatching(Analyser):
 
             if name == BulkDomainMarker.__name__ and analyser['output']:
                 # Skip bulk record and deal with it later, with such large
-                # number of SAN name, it's bound to be a match (FP)
+                # number of SAN name, it's bound to be a match
                 continue
 
             analysers[name] = analyser['output']
@@ -329,6 +332,101 @@ class BulkDomainMarker(Analyser):
         record['analysers'].append({
             'analyser': type(self).__name__,
             'output': is_bulked,
+        })
+
+        return record
+
+
+class FeaturesGenerator(Analyser):
+    '''
+    Generate features to detect outliers in the stream. In our case, the outliers is
+    the 'suspicious' phishing domains.
+    '''
+    def __init__(self):
+        '''
+        '''
+        self.logos = enchant.Dict('en_US')
+
+    # pylint: disable=invalid-name
+    def run(self, record):
+        '''
+        The list of features will be:
+        - The number of domain parts, for example, www.google.com is 3.
+        - The overall length in characters.
+        - The length of the longest domain part.
+        - The length of the TLD, e.g. .online or .download is longer than .com.
+        - The entropy of non-dictionary words.
+        '''
+        def entropy(string):
+            '''
+            Calculates the Shannon entropy of a string
+            '''
+            prob = [ float(string.count(c)) / len(string) for c in dict.fromkeys(list(string)) ]
+            # Calculate the entropy
+            entropy = - sum([p * math.log(p) / math.log(2.0) for p in prob])
+
+            return entropy
+
+        def max_entropy(length):
+            '''
+            Calculates the maximum Shannon entropy of a string with given length
+            '''
+            prob = 1.0 / length
+            return -1.0 * length * prob * math.log(prob) / math.log(2.0)
+
+        if 'analysers' not in record:
+            record['analysers'] = []
+
+        x_samples = []
+        Y_samples = []
+
+        for analyser in record['analysers']:
+            if analyser['analyser'] != 'WordSegmentation':
+                continue
+
+            for domain, segments in analyser['output'].items():
+                parts = domain.split('.')
+
+                x = []
+                # Compute the number of domain parts
+                x.append(len(parts))
+
+                # Compute the length of the whole domain
+                x.append(len(domain))
+
+                longest = ''
+                # Compute the length of the longest domain parts
+                for part in parts:
+                    if len(part) > len(longest):
+                        longest = part
+
+                x.append(len(longest))
+
+                # Compute the length of the TLD
+                x.append(len(parts[-1]))
+
+                # randomnese = argmax entropy(word) / max_entropy(len(word))
+                randomnese = 0.0
+
+                for word in segments:
+                    if self.logos.check(word):
+                        continue
+
+                    tmp = entropy(word) / max_entropy(len(word))
+                    # Compute the maximum entropy level of all non-dictionary words
+                    if tmp > randomnese:
+                        randomnese = tmp
+
+                x.append(randomnese)
+
+                x_samples.append(x)
+                Y_samples.append(True if 'usual_suspect' in record else False)
+
+            break
+
+        record['analysers'].append({
+            'analyser': type(self).__name__,
+            'output': x_samples,
         })
 
         return record

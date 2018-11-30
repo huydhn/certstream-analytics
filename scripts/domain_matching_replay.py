@@ -125,7 +125,7 @@ Consume data from certstream and does its magic.
             except json.decoder.JSONDecodeError:
                 continue
 
-            if storage:
+            if args.storage:
                 storage.save(record)
 
             for analyser in analysers:
