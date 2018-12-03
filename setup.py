@@ -17,8 +17,11 @@ setup(
     license='MIT',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    install_requires=['elasticsearch_dsl', 'certstream', 'pyahocorasick', 'tldextract', 'wordsegment'],
+    install_requires=['elasticsearch_dsl', 'certstream', 'pyahocorasick', 'tldextract', 'wordsegment', 'enchant'],
     tests_require=['unittest', 'coverage', 'nose', 'pytest-pep8', 'pytest-cov', 'codecov'],
+    dependency_links=[
+        'https://github.com/casics/nostril/tarball/master'
+    ],
     packages=find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",

@@ -6,10 +6,10 @@ it is to prevent phishing domains.
 from enum import Enum
 
 import re
-import math
 import enchant
 import tldextract
 import wordsegment
+from nostril import nonsense
 import ahocorasick
 
 from .base import Analyser
@@ -342,6 +342,8 @@ class FeaturesGenerator(Analyser):
     Generate features to detect outliers in the stream. In our case, the outliers is
     the 'suspicious' phishing domains.
     '''
+    NOSTRIL_LENGTH_LIMIT = 6
+
     def __init__(self):
         '''
         '''
@@ -355,25 +357,8 @@ class FeaturesGenerator(Analyser):
         - The overall length in characters.
         - The length of the longest domain part.
         - The length of the TLD, e.g. .online or .download is longer than .com.
-        - The entropy of non-dictionary words.
+        - The randomness level of the domain.
         '''
-        def entropy(string):
-            '''
-            Calculates the Shannon entropy of a string
-            '''
-            prob = [ float(string.count(c)) / len(string) for c in dict.fromkeys(list(string)) ]
-            # Calculate the entropy
-            entropy = - sum([p * math.log(p) / math.log(2.0) for p in prob])
-
-            return entropy
-
-        def max_entropy(length):
-            '''
-            Calculates the maximum Shannon entropy of a string with given length
-            '''
-            prob = 1.0 / length
-            return -1.0 * length * prob * math.log(prob) / math.log(2.0)
-
         if 'analysers' not in record:
             record['analysers'] = []
 
@@ -405,19 +390,18 @@ class FeaturesGenerator(Analyser):
                 # Compute the length of the TLD
                 x.append(len(parts[-1]))
 
-                # randomnese = argmax entropy(word) / max_entropy(len(word))
-                randomnese = 0.0
-
-                for word in segments:
-                    if self.logos.check(word):
+                randomness_count = 0
+                # The nostril package which we are using to detect non-sense words
+                # in the domain only returns a boolean verdict so may be we need to
+                # think of how we want to quantify this
+                for w in segments:
+                    try:
+                        if len(w) >= FeaturesGenerator.NOSTRIL_LENGTH_LIMIT and nonsense(w):
+                            randomness_count += 1
+                    except ValueError:
                         continue
 
-                    tmp = entropy(word) / max_entropy(len(word))
-                    # Compute the maximum entropy level of all non-dictionary words
-                    if tmp > randomnese:
-                        randomnese = tmp
-
-                x.append(randomnese)
+                x.append(randomness_count / len(segments))
 
                 x_samples.append(x)
                 Y_samples.append(True if 'usual_suspect' in record else False)
