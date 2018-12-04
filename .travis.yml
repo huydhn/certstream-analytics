@@ -6,7 +6,8 @@ python:
 install:
   - pip install pytest-pep8 pytest-cov
   - pip install codecov
-  - pip install elasticsearch_dsl certstream pyahocorasick tldextract wordsegment
+  - pip install elasticsearch_dsl certstream pyahocorasick tldextract wordsegment enchant idna
+  - pip install git+https://github.com/casics/nostril.git
   - pip install -e .[tests]
 services:
   - elasticsearch

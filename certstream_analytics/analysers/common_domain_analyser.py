@@ -11,6 +11,7 @@ import tldextract
 import wordsegment
 from nostril import nonsense
 import ahocorasick
+import idna
 
 from .base import Analyser
 
@@ -79,6 +80,9 @@ class AhoCorasickDomainMatching(Analyser):
         results = {}
         # Check the domain and all its SAN
         for domain in record['all_domains']:
+            # Remove wildcard
+            domain = re.sub('^\*\.', '', domain)
+
             # Remove some FP-prone parts
             domain = re.sub(AhoCorasickDomainMatching.IGNORED_PARTS, '', domain)
 
@@ -155,6 +159,9 @@ class WordSegmentation(Analyser):
         results = {}
         # Check the domain and all its SAN
         for domain in record['all_domains']:
+            # Remove wildcard
+            domain = re.sub('^\*\.', '', domain)
+
             # The TLD will be stripped off cause it does not contribute anything here
             ext = tldextract.extract(domain)
 
@@ -337,6 +344,39 @@ class BulkDomainMarker(Analyser):
         return record
 
 
+class IDNADecoder(Analyser):
+    '''
+    Decode all domains in IDNA format.
+    '''
+    def run(self, record):
+        '''
+        Check if a domain in the list is in IDNA format and convert it back to
+        Unicode.
+        '''
+        decoded = []
+
+        for domain in record['all_domains']:
+            try:
+                if re.match('^\*\.', domain):
+                    # Remove wildcard domain
+                    domain = re.sub('^\*\.', '', domain)
+                    domain = idna.decode(domain)
+                    domain = '*.{}'.format(domain)
+                else:
+                    domain = idna.decode(domain)
+
+            except idna.core.InvalidCodepoint:
+                # Fail to decode the domain, just keep it as it is for now
+                pass
+            except UnicodeError:
+                pass
+
+            decoded.append(domain)
+
+        record['all_domains'] = decoded
+        return record
+
+
 class FeaturesGenerator(Analyser):
     '''
     Generate features to detect outliers in the stream. In our case, the outliers is
@@ -370,6 +410,9 @@ class FeaturesGenerator(Analyser):
                 continue
 
             for domain, segments in analyser['output'].items():
+                # Remove wildcard domain
+                domain = re.sub('^\*\.', '', domain)
+
                 parts = domain.split('.')
 
                 x = []

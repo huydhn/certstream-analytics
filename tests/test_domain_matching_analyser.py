@@ -8,6 +8,8 @@ import unittest
 from certstream_analytics.analysers import AhoCorasickDomainMatching
 from certstream_analytics.analysers import WordSegmentation
 from certstream_analytics.analysers import DomainMatching, DomainMatchingOption
+from certstream_analytics.analysers import BulkDomainMarker
+from certstream_analytics.analysers import IDNADecoder
 
 
 class DomainMatchingTest(unittest.TestCase):
@@ -364,3 +366,116 @@ class DomainMatchingTest(unittest.TestCase):
                 got = analyser.run(case['data'])
                 self.assertListEqual(got['analysers'], expected,
                                      '{} ({})'.format(case['description'], option))
+
+    def test_bulk_domain_marker(self):
+        '''
+        Test the bulk domain analyser.
+        '''
+        bulky = BulkDomainMarker()
+
+        cases = [
+            {
+                'data': {
+                    'all_domains': [
+                        'store.google.com',
+                        'google.com',
+                    ],
+                },
+                'expected':  [
+                    {'analyser': 'BulkDomainMarker', 'output': False}
+                ],
+                'description': 'Not a bulk record',
+            },
+            {
+                'data': {
+                    'all_domains': [
+                        'a.com',
+                        'b.com',
+                        'c.com',
+                        'd.com',
+                        'e.com',
+                        'f.com',
+                        'g.com',
+                        'h.com',
+                        'i.com',
+                        'j.com',
+                        'k.com',
+                        'l.com',
+                        'm.com',
+                        'n.com',
+                        'o.com',
+                    ],
+                },
+                'expected':  [
+                    {'analyser': 'BulkDomainMarker', 'output': True}
+                ],
+                'description': 'Mark a bulk record',
+            },
+        ]
+
+        for case in cases:
+            got = bulky.run(case['data'])
+            self.assertListEqual(got['analysers'], case['expected'], case['description'])
+
+    def test_idn_decoder(self):
+        '''
+        Test the IDNA decoder.
+        '''
+        decoder = IDNADecoder()
+
+        cases = [
+            {
+                'data': {
+                    'all_domains': [
+                        'store.google.com',
+                        'google.com',
+                    ],
+                },
+                'expected':  [
+                    'store.google.com',
+                    'google.com',
+                ],
+                'description': 'There is no domain in IDNA format',
+            },
+            {
+                'data': {
+                    'all_domains': [
+                        'xn--f1ahbgpekke1h.xn--p1ai',
+                        'tigrobaldai.lt'
+                    ],
+                },
+                'expected':  [
+                    'укрэмпужск.рф',
+                    'tigrobaldai.lt'
+                ],
+                'description': 'Convert some domains in IDNA format',
+            },
+            {
+                'data': {
+                    'all_domains': [
+                        'xn--foobar.xn--me',
+                    ],
+                },
+                'expected':  [
+                    'xn--foobar.xn--me',
+                ],
+                'description': 'Handle an invalid IDNA string',
+            },
+            {
+                'data': {
+                    'all_domains': [
+                        '*.xn---35-5cd3cln6a9bzb.xn--p1ai',
+                        '*.nl-dating-vidkid.com',
+                    ],
+                },
+                'expected':  [
+                    '*.отмычка-35.рф',
+                    '*.nl-dating-vidkid.com',
+                ],
+                'description': 'Handle an invalid code point',
+            },
+        ]
+
+        for case in cases:
+            got = decoder.run(case['data'])
+            self.assertListEqual(got['all_domains'], case['expected'], case['description'])
