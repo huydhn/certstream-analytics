@@ -10,8 +10,8 @@ import enchant
 import tldextract
 import wordsegment
 from nostril import nonsense
-import ahocorasick
 import idna
+import ahocorasick
 
 from .base import Analyser
 
@@ -81,7 +81,7 @@ class AhoCorasickDomainMatching(Analyser):
         # Check the domain and all its SAN
         for domain in record['all_domains']:
             # Remove wildcard
-            domain = re.sub('^\*\.', '', domain)
+            domain = re.sub(r'^\*\.', '', domain)
 
             # Remove some FP-prone parts
             domain = re.sub(AhoCorasickDomainMatching.IGNORED_PARTS, '', domain)
@@ -160,7 +160,7 @@ class WordSegmentation(Analyser):
         # Check the domain and all its SAN
         for domain in record['all_domains']:
             # Remove wildcard
-            domain = re.sub('^\*\.', '', domain)
+            domain = re.sub(r'^\*\.', '', domain)
 
             # The TLD will be stripped off cause it does not contribute anything here
             ext = tldextract.extract(domain)
@@ -357,9 +357,9 @@ class IDNADecoder(Analyser):
 
         for domain in record['all_domains']:
             try:
-                if re.match('^\*\.', domain):
+                if re.match(r'^\*\.', domain):
                     # Remove wildcard domain
-                    domain = re.sub('^\*\.', '', domain)
+                    domain = re.sub(r'^\*\.', '', domain)
                     domain = idna.decode(domain)
                     domain = '*.{}'.format(domain)
                 else:
@@ -411,7 +411,7 @@ class FeaturesGenerator(Analyser):
 
             for domain, segments in analyser['output'].items():
                 # Remove wildcard domain
-                domain = re.sub('^\*\.', '', domain)
+                domain = re.sub(r'^\*\.', '', domain)
 
                 parts = domain.split('.')
 
