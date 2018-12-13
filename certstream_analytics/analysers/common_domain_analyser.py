@@ -6,11 +6,11 @@ it is to prevent phishing domains.
 from enum import Enum
 
 import re
-import enchant
 import tldextract
 import wordsegment
 from nostril import nonsense
 import idna
+from confusable_homoglyphs import confusables
 import ahocorasick
 
 from .base import Analyser
@@ -356,25 +356,116 @@ class IDNADecoder(Analyser):
         decoded = []
 
         for domain in record['all_domains']:
+            wildcard = False
+
             try:
                 if re.match(r'^\*\.', domain):
-                    # Remove wildcard domain
+                    wildcard = True
+                    # Remove wildcard cause it interfere with the IDNA module
+                    # and we'll put it back later
                     domain = re.sub(r'^\*\.', '', domain)
-                    domain = idna.decode(domain)
-                    domain = '*.{}'.format(domain)
-                else:
-                    domain = idna.decode(domain)
+
+                domain = idna.decode(domain)
 
             except idna.core.InvalidCodepoint:
                 # Fail to decode the domain, just keep it as it is for now
                 pass
             except UnicodeError:
                 pass
+            finally:
+                if wildcard:
+                    domain = '*.{}'.format(domain)
 
             decoded.append(domain)
 
         record['all_domains'] = decoded
         return record
+
+
+class HomoglyphsDecoder(Analyser):
+    '''
+    Smartly convert domains whose names include some suspicious homoglyphs to
+    ASCII.  This will probably need to be right done after IDNA conversion and
+    before other analysers so that they can get benefits from it.
+    '''
+    def __init__(self, greedy=False):
+        '''
+        We rely on the confusable-homoglyphs at https://github.com/vhf/confusable_homoglyphs
+        to do its magic.
+
+        If the greedy flag is set, all alternative domains will be returned.  Otherwise, only
+        the first one will be available.
+        '''
+        self.greedy = greedy
+
+    def run(self, record):
+        '''
+        Using the confusable-homoglyphs, we are going to generate all alternatives ASCII
+        names of a domain.  It's a bit of a brute force though.
+        '''
+        decoded = []
+
+        # For our specific case, we will only care about latin character
+        lower_s = range(ord('a'), ord('z') + 1)
+        upper_s = range(ord('A'), ord('Z') + 1)
+
+        for domain in record['all_domains']:
+            wildcard = False
+
+            if re.match(r'^\*\.', domain):
+                wildcard = True
+                # Remove wildcard to simplify the domain name a bit and we'll put it back later
+                domain = re.sub(r'^\*\.', '', domain)
+
+            c_map = []
+            for hglyph in confusables.is_confusable(domain, greedy=True):
+                found = []
+
+                if hglyph['alias'] == 'LATIN':
+                    # The character is latin, we don't need to do anything here
+                    found.append(hglyph['character'])
+
+                for alt in hglyph['homoglyphs']:
+                    is_latin = True
+                    # We need to check the lengh of the homoglyph here cause
+                    # confusable_homoglyphs library nicely returns multi-character
+                    # match as well, for example, 'rn' has an alternative of 'm'
+                    for alt_c in alt['c']:
+                        if ord(alt_c) not in lower_s and ord(alt_c) not in upper_s:
+                            is_latin = False
+                            break
+
+                    if is_latin:
+                        found.append(alt['c'].lower())
+
+                # If nothing is found, we keep the original character
+                if not found:
+                    found.append(hglyph['character'])
+
+                c_map.append(found)
+
+            for alt in self._generate_alternatives(c_map):
+                if wildcard:
+                    alt = '*.{}'.format(alt)
+
+                decoded.append(alt)
+
+        record['all_domains'] = decoded
+        return record
+
+    def _generate_alternatives(self, alt_characters, index=0, current=''):
+        '''
+        Generate all alternative ASCII names of a domain using the list of all
+        alternative characters.
+        '''
+        if index == len(alt_characters):
+            yield current
+
+        else:
+            for alt_c in alt_characters[index]:
+                yield from self._generate_alternatives(alt_characters,
+                                                       index + 1,
+                                                       current + alt_c)
 
 
 class FeaturesGenerator(Analyser):
@@ -383,11 +474,6 @@ class FeaturesGenerator(Analyser):
     the 'suspicious' phishing domains.
     '''
     NOSTRIL_LENGTH_LIMIT = 6
-
-    def __init__(self):
-        '''
-        '''
-        self.logos = enchant.Dict('en_US')
 
     # pylint: disable=invalid-name
     def run(self, record):
