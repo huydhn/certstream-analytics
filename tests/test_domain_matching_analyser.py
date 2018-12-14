@@ -10,6 +10,7 @@ from certstream_analytics.analysers import WordSegmentation
 from certstream_analytics.analysers import DomainMatching, DomainMatchingOption
 from certstream_analytics.analysers import BulkDomainMarker
 from certstream_analytics.analysers import IDNADecoder
+from certstream_analytics.analysers import HomoglyphsDecoder
 
 
 class DomainMatchingTest(unittest.TestCase):
@@ -477,5 +478,123 @@ class DomainMatchingTest(unittest.TestCase):
         ]
 
         for case in cases:
+            got = decoder.run(case['data'])
+            self.assertListEqual(got['all_domains'], case['expected'], case['description'])
+
+    def test_homoglyphs_decoder(self):
+        '''
+        Test the homoglyphs decoder.
+        '''
+        cases = [
+            {
+                'data': {
+                    'all_domains': [
+                        'store.google.com',
+                        '*.google.com',
+                    ],
+                },
+                'greedy': False,
+                'expected':  [
+                    'store.google.com',
+                    '*.google.com',
+                ],
+                'description': 'Normal domains in ASCII',
+            },
+            {
+                'data': {
+                    'all_domains': [
+                        'store.google.com',
+                        '*.google.com',
+                    ],
+                },
+                'greedy': True,
+                'expected':  [
+                    'store.google.com',
+                    'store.google.corn',
+                    'store.googie.com',
+                    'store.googie.corn',
+                    '*.google.com',
+                    '*.google.corn',
+                    '*.googie.com',
+                    '*.googie.corn'
+                ],
+                'description': 'Normal domains in ASCII with a greedy decoder',
+            },
+            {
+                'data': {
+                    'all_domains': [
+                        'укрэмпужск.рф',
+                        'tigrobaldai.lt',
+                    ],
+                },
+                'greedy': False,
+                'expected':  [
+                    'yкpэмпyжcк.pф',
+                    'tigrobaldai.lt',
+                ],
+                'description': 'Normal domains in Unicode',
+            },
+            {
+                'data': {
+                    'all_domains': [
+                        'укрэмпужск.рф',
+                        'tigrobaldai.lt',
+                    ],
+                },
+                'greedy': True,
+                'expected':  [
+                    'yкpэмпyжcк.pф',
+                    'tigrobaldai.lt',
+                    'tigrobaldai.it',
+                    'tigrobaidai.lt',
+                    'tigrobaidai.it',
+                ],
+                'description': 'Normal domains in Unicode with a greedy decoder',
+            },
+            {
+                'data': {
+                    'all_domains': [
+                        # MATHEMATICAL MONOSPACE SMALL P 1D699
+                        '*.𝗉aypal.com',
+
+                        # MATHEMATICAL SAN-SERIF BOLD SMALL RHO
+                        'phishing.𝗉ay𝞀al.com',
+                    ],
+                },
+                'greedy': False,
+                'expected': [
+                    '*.paypal.com',
+                    'phishing.paypal.com',
+                ],
+                'description': 'Phishing example in confusable homoglyphs'
+            },
+            {
+                'data': {
+                    'all_domains': [
+                        # MATHEMATICAL MONOSPACE SMALL P 1D699
+                        '*.𝗉aypal.com',
+
+                        # MATHEMATICAL SAN-SERIF BOLD SMALL RHO
+                        'phishing.𝗉ay𝞀al.com',
+                    ],
+                },
+                'greedy': True,
+                'expected': [
+                    '*.paypal.com',
+                    '*.paypal.corn',
+                    '*.paypai.com',
+                    '*.paypai.corn',
+                    'phishing.paypal.com',
+                    'phishing.paypal.corn',
+                    'phishing.paypai.com',
+                    'phishing.paypai.corn',
+                ],
+                'description': 'Phishing example in confusable homoglyphs with a greedy decoder'
+            },
+        ]
+
+        for case in cases:
+            decoder = HomoglyphsDecoder(greedy=case['greedy'])
+
             got = decoder.run(case['data'])
             self.assertListEqual(got['all_domains'], case['expected'], case['description'])

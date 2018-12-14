@@ -417,9 +417,18 @@ class HomoglyphsDecoder(Analyser):
                 # Remove wildcard to simplify the domain name a bit and we'll put it back later
                 domain = re.sub(r'^\*\.', '', domain)
 
-            c_map = []
-            for hglyph in confusables.is_confusable(domain, greedy=True):
+            hg_map = {hg['character']: hg for hg in confusables.is_confusable(domain, greedy=True)}
+            decoded_domain_c = []
+
+            for domain_c in domain:
+                # Confusable homoglyphs could not find any homoglyphs for this character
+                # so we decice to keep the original character as it is
+                if domain_c not in hg_map:
+                    decoded_domain_c.append([domain_c])
+                    continue
+
                 found = []
+                hglyph = hg_map[domain_c]
 
                 if hglyph['alias'] == 'LATIN':
                     # The character is latin, we don't need to do anything here
@@ -442,13 +451,16 @@ class HomoglyphsDecoder(Analyser):
                 if not found:
                     found.append(hglyph['character'])
 
-                c_map.append(found)
+                decoded_domain_c.append(found)
 
-            for alt in self._generate_alternatives(c_map):
+            for alt in self._generate_alternatives(decoded_domain_c):
                 if wildcard:
                     alt = '*.{}'.format(alt)
 
                 decoded.append(alt)
+
+                if not self.greedy:
+                    break
 
         record['all_domains'] = decoded
         return record
