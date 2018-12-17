@@ -59,22 +59,15 @@ while not done:
 consumer.stop()
 ```
 
-## Most popular domains matching (for Anti-phishing)
-
-A domain and its SAN from Certstream will be compared against a list of
-most popular [domains](https://github.com/opendns/public-domain-lists)
-(from OpenDNS).  This is a simple check to remove some of the most
-obvious phishing domains, for examples, *www.facebook.com.msg40.site*
-will match with *facebook* cause *facebook* is in the above list of most
-popular domains (I wonder how long it is going to last).
-
-### IDNA decoder
+## IDNA decoder
 This analyser decode IDNA domain name into Unicode for further processing
 downstream.  Normally, it will be the very first analyser to be run.  If
 the analyser encounters a malform IDNA domain string, it will keep the
 domain as it is.
 
 ```python
+from certstream_analytics.analysers import IDNADecoder
+
 decoder = IDNADecoder()
 
 # Just an example dummy record
@@ -88,7 +81,7 @@ record = {
 print(decoder.run(record))
 ```
 
-### Homoglyphs decoder
+## Homoglyphs decoder
 There are lots of phishing websites that utilize [homoglyphs](https://en.wikipedia.org/wiki/Homoglyph)
 to lure the victims.  Some common examples include 'l' and 'i' or the
 Unicode character RHO '𝞀' and 'p'.  The homoglyphs decoder uses the excellent
@@ -96,6 +89,8 @@ Unicode character RHO '𝞀' and 'p'.  The homoglyphs decoder uses the excellent
 generate all potential alternative domain names in ASCII.
 
 ```python
+from certstream_analytics.analysers import HomoglyphsDecoder
+
 # If the greedy flag is set, all alternative domains will be returned
 decoder = HomoglyphsDecoder(greed=False)
 
@@ -115,7 +110,13 @@ record = {
 print(decoder.run(record))
 ```
 
-### Aho-Corasick
+## Aho-Corasick
+A domain and its SAN from Certstream will be compared against a list of
+most popular [domains](https://github.com/opendns/public-domain-lists)
+(from OpenDNS) using Aho-Corasick algorithm.  This is a simple check to
+remove some of the most obvious phishing domains, for examples, *www.facebook.com.msg40.site*
+will match with *facebook* cause *facebook* is in the above list of most
+popular domains (I wonder how long it is going to last).
 
 ```python
 from certstream_analytics.analysers import AhoCorasickDomainMatching
@@ -143,4 +144,52 @@ while not done:
 consumer.stop()
 ```
 
-### Word segmentation
+## Word segmentation
+In order to improve the accuracy of the matching algorithm, we segment
+the domains into English words using
+[wordsegment](https://github.com/grantjenks/python-wordsegment).
+
+```python
+from certstream_analytics.analysers import WordSegmentation
+
+wordsegmentation = WordSegmentation()
+
+# Just an example dummy record
+record = {
+    'all_domains': [
+        'login-appleid.apple.com.managesupport.co',
+    ]
+}
+
+# The returned output is as follows:
+#
+# {
+#   'analyser': 'WordSegmentation',
+#   'output': {
+#     'login-appleid.apple.com.managesuppport.co': [
+#       'login',
+#       'apple',
+#       'id',
+#       'apple',
+#       'com',
+#       'manage',
+#       'support',
+#       'co'
+#     ],
+# },
+#
+print(decoder.run(record))
+```
+
+## Features generator
+A list of features for each domain will also be generated so that they
+can be used for classification jobs further downstream.  The list
+includes:
+
+- The number of dot-separated fields in the domain, for example, www.google.com has 3.
+- The overall length of the domain in characters.
+- The length of the longest dot-separate field .
+- The length of the TLD, e.g. .online (6) or .download (8) is longer than .com (3).
+- The randomness level of the domain.  [Nostril](https://github.com/casics/nostril)
+  package is used to check how many words as returned by the WordSegmentation
+  analyser are non-sense.
