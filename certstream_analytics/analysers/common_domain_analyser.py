@@ -170,7 +170,15 @@ class WordSegmentation(Analyser):
             # will become ['co', 'uk']. Let see if this works out.
             for part in ext[:]:
                 for token in part.split('.'):
-                    words.extend([w for w in wordsegment.segment(token) if w not in WordSegmentation.STOPWORDS])
+                    segmented = [w for w in wordsegment.segment(token) if w not in WordSegmentation.STOPWORDS]
+
+                    if segmented:
+                        words.extend(segmented)
+                    elif token:
+                        # For some IDNA domain like xn--wgbfq3d.xn--ngbc5azd, the segmentation
+                        # won't work and an empty array is returned. So we choose to just keep
+                        # the original token
+                        words.append(token)
 
             results[domain] = words
 

@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 '''
-Replay a stream of records from certstream to test the domain matching pipeline.
-It's similar to the domain_matching.py script without the connection to certstream
-to get live data.
+Replay a stream of records from certstream to test the processing pipeline.
 '''
 import argparse
 import json
@@ -13,6 +11,9 @@ from certstream_analytics.analysers import AhoCorasickDomainMatching
 from certstream_analytics.analysers import WordSegmentation
 from certstream_analytics.analysers import DomainMatching, DomainMatchingOption
 from certstream_analytics.analysers import BulkDomainMarker
+from certstream_analytics.analysers import IDNADecoder
+from certstream_analytics.analysers import HomoglyphsDecoder
+from certstream_analytics.analysers import FeaturesGenerator
 from certstream_analytics.reporters import FileReporter
 from certstream_analytics.storages import ElasticsearchStorage
 
@@ -30,9 +31,12 @@ def init_analysers(domains_file, include_tld, matching_option):
     '''
     Initialize all the analysers for matching domains. The list includes:
 
-    - AhoCorasick.
-    - Word segmentation.
-    - Meta domain matching.
+    - IDNA
+    - Homoglyphs
+    - AhoCorasick
+    - Word segmentation
+    - Bulk domains
+    - Meta domain matching
     '''
     with open(domains_file) as fhandle:
         domains = [line.rstrip() for line in fhandle]
@@ -40,29 +44,33 @@ def init_analysers(domains_file, include_tld, matching_option):
     # Initialize all analysers. Note that their order is important cause they
     # will be executed in that order
     return [
+        IDNADecoder(),
+        HomoglyphsDecoder(greedy=False),
         AhoCorasickDomainMatching(domains=domains),
         WordSegmentation(),
         BulkDomainMarker(),
         DomainMatching(include_tld=include_tld, option=matching_option),
+        FeaturesGenerator(),
     ]
 
 
 def run():
     '''
     A simple utility to replay certstream and match the records to a list of
-    known domains from OpenDNS.
+    known domains from OpenDNS. It also generates several features for each
+    domain such as the domain length.
     '''
     epilog = '''
 examples:
-\033[1;33m/usr/bin/certstream_consumer.py --replay certstream.txt\033[0m
+\033[1;33m/usr/bin/replay.py --replay certstream.txt\033[0m
 
-\033[1;33m/usr/bin/certstream_consumer.py --storage-host elasticsearch:9200 --storage elasticsearch\033[0m
+\033[1;33m/usr/bin/replay.py --storage-host elasticsearch:9200 --storage elasticsearch\033[0m
 
-\033[1;33m/usr/bin/certstream_consumer.py --report-location report.txt --report file\033[0m
+\033[1;33m/usr/bin/replay.py --report-location report.txt --report file\033[0m
 
-\033[1;33m/usr/bin/certstream_consumer.py --domains opendns-top-domains.txt\033[0m
+\033[1;33m/usr/bin/replay.py --domains opendns-top-domains.txt\033[0m
 
-Consume data from certstream and does its magic.
+Replay data from certstream.
 '''
     parser = argparse.ArgumentParser(description=__doc__, epilog=epilog,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
