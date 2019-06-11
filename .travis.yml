@@ -6,6 +6,7 @@ python:
 before_install:
   - sudo apt-get install -y libenchant-dev
 install:
+  - pip install --upgrade pytest
   - pip install pytest-pep8 pytest-cov
   - pip install codecov
   - pip install elasticsearch_dsl certstream pyahocorasick tldextract wordsegment pyenchant idna confusable-homoglyphs
