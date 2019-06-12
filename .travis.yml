@@ -19,8 +19,6 @@ install:
   - pip install elasticsearch_dsl certstream pyahocorasick tldextract wordsegment pyenchant idna confusable-homoglyphs
   - pip install git+https://github.com/casics/nostril.git
   - pip install -e .[tests]
-services:
-  - elasticsearch
 before_script:
   - sleep 10
   - curl 'http://localhost:9200'
