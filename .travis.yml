@@ -16,8 +16,8 @@ install:
 services:
   - elasticsearch
 before_script:
-  - curl 'http://localhost:9200'
   - sleep 10
+  - curl 'http://localhost:9200'
 script:
   - pytest --pep8 -m pep8 certstream_analytics/
   - PYTHONPATH=$PWD:$PYTHONPATH pytest --cov=./ tests/
