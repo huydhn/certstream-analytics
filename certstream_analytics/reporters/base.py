@@ -17,7 +17,6 @@ class Reporter:
         '''
         Move along, nothing to see here.
         '''
-        pass
 
 
 class FileReporter(Reporter):
@@ -28,7 +27,10 @@ class FileReporter(Reporter):
         '''
         Note that an exception will be raised if the path is not valid or writable.
         '''
-        self.path = path
+        self.fhandler = open(path, 'a')
+
+    def __del__(self):
+        self.fhandler.close()
 
     def publish(self, report):
         '''
@@ -38,5 +40,4 @@ class FileReporter(Reporter):
         if not report:
             return
 
-        with open(self.path, 'a') as fhandler:
-            print(json.dumps(report), file=fhandler)
+        print(json.dumps(report), file=self.fhandler)

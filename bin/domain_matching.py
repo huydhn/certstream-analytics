@@ -91,12 +91,12 @@ Consume data from certstream and does its magic.
     parser.add_argument('--domains',
                         help='the list of domains to match with (opendns-top-domains.txt)')
 
-    parser.add_argument('--storage-host', default='localhost:9200',
+    parser.add_argument('--storage-host',
                         help='set the storage host')
-    parser.add_argument('-s', '--storage', default='elasticsearch',
+    parser.add_argument('-s', '--storage',
                         help='choose the storage type (elasticsearch)')
 
-    parser.add_argument('--report-location',
+    parser.add_argument('--report-location', default='report.txt',
                         help='where to save the report to?')
     parser.add_argument('-r', '--report', default='file',
                         help='choose the reporter type')
@@ -133,11 +133,8 @@ Consume data from certstream and does its magic.
                                include_tld=True,
                                matching_option=DomainMatchingOption.ORDER_MATCH)
 
-    if args.report:
-        reporter = SUPPORTED_REPORTERS[args.report](args.report_location)
-
-    if args.storage:
-        storage = SUPPORTED_STORAGES[args.storage](args.storage_host)
+    reporter = SUPPORTED_REPORTERS[args.report](args.report_location) if args.report else None
+    storage = SUPPORTED_STORAGES[args.storage](args.storage_host) if args.storage else None
 
     engine = CertstreamAnalytics(transformer=transformer,
                                  storages=storage,

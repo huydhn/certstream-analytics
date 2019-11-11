@@ -2,8 +2,6 @@
 Transform the certificate data from certstream before passing it to the
 processing pipeline.
 '''
-import json
-import logging
 from abc import ABCMeta, abstractmethod
 
 
@@ -19,7 +17,6 @@ class Transformer:
         '''
         Move along, nothing to see here.
         '''
-        pass
 
 
 class PassthroughTransformer(Transformer):
@@ -70,8 +67,6 @@ class CertstreamTransformer(Transformer):
                 ],
             }
         '''
-        logging.debug(json.dumps(raw))
-
         filtered = {
             'cert_index': raw['data']['cert_index'],
             'seen': raw['data']['seen'],

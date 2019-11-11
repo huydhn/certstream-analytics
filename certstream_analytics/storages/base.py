@@ -16,4 +16,3 @@ class Storage:
         '''
         Move along, nothing to see here.
         '''
-        pass

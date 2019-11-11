@@ -39,12 +39,11 @@ class Analyser:
                 analysers: [
                     {
                         analyser: ANALYSER NAME,
-                        output: ANYTHING GOESE HERE,
+                        output: ANYTHING GOES HERE,
                     },
                 ],
             }
         '''
-        pass
 
 
 class Debugger(Analyser):
