@@ -1,7 +1,7 @@
-'''
+"""
 Save certstream data into Elasticsearch so that it can be queried by Kibana
 later on.
-'''
+"""
 from datetime import datetime
 from elasticsearch_dsl import connections, analyzer
 from elasticsearch_dsl import Document, Date, Text, Keyword
@@ -15,13 +15,13 @@ ANALYZER = analyzer('standard_analyzer',
 
 # pylint: disable=too-few-public-methods
 class ElasticsearchStorage(Storage):
-    '''
+    """
     An experiment Elasticsearch storage to keep and index the received records.
-    '''
+    """
     class Record(Document):
-        '''
+        """
         An Elasticsearch record as it is.
-        '''
+        """
         timestamp = Date(default_timezone='UTC')
 
         # As reported by certstream
@@ -39,16 +39,16 @@ class ElasticsearchStorage(Storage):
         chain = Text(analyzer=ANALYZER, fields={'raw': Keyword()})
 
         class Index:
-            '''
+            """
             Use daily indices.
-            '''
+            """
             name = 'certstream-*'
 
         # pylint: disable=arguments-differ
         def save(self, **kwargs):
-            '''
+            """
             Magically save the record in Elasticsearch.
-            '''
+            """
             self.timestamp = datetime.now()
             # Override the index to go to the proper timeslot
             kwargs['index'] = self.timestamp.strftime('certstream-%Y.%m.%d')
@@ -56,15 +56,15 @@ class ElasticsearchStorage(Storage):
             return super().save(**kwargs)
 
     def __init__(self, hosts, timeout=10):
-        '''
+        """
         Provide the Elasticsearch hostname (Defaults to localhost).
-        '''
+        """
         connections.create_connection(hosts=hosts, timeout=timeout)
 
     def save(self, record):
-        '''
+        """
         Save the certstream record in Elasticsearch.
-        '''
+        """
         elasticsearch_record = ElasticsearchStorage.Record(meta={'id': record['cert_index']})
 
         # In miliseconds

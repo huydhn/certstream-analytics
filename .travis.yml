@@ -2,7 +2,7 @@ language: python
 os:
   - linux
 python:
-  - '3.6'
+  - '3.7'
 before_install:
   - sudo apt-get install -y libenchant-dev
   - curl -O https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-6.8.0.deb && sudo dpkg -i --force-confnew elasticsearch-6.8.0.deb && sudo service elasticsearch restart

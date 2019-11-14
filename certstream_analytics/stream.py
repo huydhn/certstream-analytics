@@ -1,9 +1,9 @@
-'''
+"""
 All hail [certstream](https://github.com/CaliDog/certstream-python)!!
 
 This module consumes the feed of certificates from certstream and does
 the heavy lifting.
-'''
+"""
 import sys
 import threading
 import certstream
@@ -14,13 +14,13 @@ from certstream_analytics.storages import Storage
 
 
 class CertstreamAnalytics():
-    '''
+    """
     Consume the feed of certificates from certstream, transform the data, and
     save it into various storages.
-    '''
+    """
 
     def __init__(self, transformer=None, storages=None, analysers=None, reporters=None):
-        '''
+        """
         This is the entry point of the whole module. It consumes data from
         certstream, transform it using a Transformer class, save it into
         a predefined storage (elasticsearch), and run the use-defined
@@ -39,7 +39,7 @@ class CertstreamAnalytics():
         The reporter, as its name implies, collects and publishes the analyser
         result somewhere, for example, email notification. It will be a subclass
         of CertstreamReporter.
-        '''
+        """
         self.transformer = transformer
 
         self.analysers = []
@@ -47,9 +47,9 @@ class CertstreamAnalytics():
         self.storages = []
 
         def _init_member(member, value, kind):
-            '''
+            """
             Initialize all storages, analysers, and reporters.
-            '''
+            """
             if value:
                 if isinstance(value, (list, tuple)):
                     setattr(self, member, value)
@@ -68,9 +68,9 @@ class CertstreamAnalytics():
         self.thread = None
 
     def start(self):
-        '''
+        """
         Start consuming data from certstream.
-        '''
+        """
         # Run the stream in a separate thread
         self.thread = threading.Thread(target=self._consume)
         # So that it will be killed when the main thread stop
@@ -78,9 +78,9 @@ class CertstreamAnalytics():
         self.thread.start()
 
     def stop(self):
-        '''
+        """
         Stop consuming data from certstream.
-        '''
+        """
         if self.stopped:
             return
 
@@ -88,9 +88,9 @@ class CertstreamAnalytics():
         self.thread.join()
 
     def _consume(self):
-        '''
+        """
         Start consuming the data from certstream.
-        '''
+        """
         self.stopped = False
         # pylint: disable=unnecessary-lambda
         certstream.listen_for_events(lambda m, c: self._callback(m, c),
@@ -98,9 +98,9 @@ class CertstreamAnalytics():
 
     # pylint: disable=unused-argument
     def _callback(self, message, context):
-        '''
+        """
         The callback handler template itself.
-        '''
+        """
         if self.stopped:
             sys.exit()
 
