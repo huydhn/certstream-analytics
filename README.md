@@ -13,7 +13,21 @@ The package can be installed from
 pip install certstream-analytics
 ```
 
-# Usage
+# Quick usage
+
+```python
+# The file domains.txt contains the list of domains that we want to monitor for
+# matches.  For examples,
+# ...
+# gmail.com
+# facebook.com
+# ...
+# 
+# The records consumed from certstream will be kept in certstream.txt
+bin/domain_matching.py --domains domains.txt --dump-location certstream.txt
+```
+
+# API
 
 ```python
 import time

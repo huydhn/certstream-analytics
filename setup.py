@@ -9,7 +9,7 @@ with open('README.md', 'r') as fh:
 
 setup(
     name='certstream-analytics',
-    version='0.1.5',
+    version='0.1.6',
     description='certstream + analytics',
     url='https://github.com/huydhn/certstream-analytics',
     author='Huy Do',
@@ -17,8 +17,23 @@ setup(
     license='MIT',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    install_requires=['elasticsearch_dsl', 'certstream', 'pyahocorasick', 'tldextract', 'wordsegment', 'pyenchant', 'idna'],
-    tests_require=['unittest', 'coverage', 'nose', 'pytest-pep8', 'pytest-cov', 'codecov'],
+    install_requires=[
+        'elasticsearch_dsl',
+        'certstream',
+        'pyahocorasick',
+        'tldextract',
+        'wordsegment',
+        'pyenchant',
+        'idna', 
+        'confusable_homoglyphs'
+    ],
+    tests_require=[
+        'coverage',
+        'nose',
+        'pytest-pep8',
+        'pytest-cov',
+        'codecov'
+    ],
     dependency_links=[
         'https://github.com/casics/nostril/tarball/master'
     ],

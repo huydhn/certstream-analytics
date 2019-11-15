@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-'''
+"""
 A simple utility to query certstream and match its records with a list
 of known domains (from OpenDNS). This script can also save the data into
 downstream storage for further processing, for example, Elasticsearch.
-'''
+"""
 import argparse
 import logging
 import signal
@@ -24,27 +24,19 @@ from certstream_analytics.stream import CertstreamAnalytics
 
 DONE = False
 
-SUPPORTED_REPORTERS = {
-    'file': lambda location: FileReporter(path=location)
-}
-
-SUPPORTED_STORAGES = {
-    'elasticsearch': lambda host: ElasticsearchStorage(hosts=[host])
-}
-
 
 # pylint: disable=unused-argument
 def exit_gracefully(signum, stack):
-    '''
+    """
     Just to be nice.
-    '''
+    """
     # pylint: disable=global-statement
     global DONE
     DONE = True
 
 
 def init_analysers(domains_file, include_tld, matching_option):
-    '''
+    """
     Initialize all the analysers for matching domains. The list includes:
 
     - IDNA
@@ -53,7 +45,7 @@ def init_analysers(domains_file, include_tld, matching_option):
     - Word segmentation
     - Bulk domains
     - Meta domain matching
-    '''
+    """
     with open(domains_file) as fhandle:
         domains = [line.rstrip() for line in fhandle]
 
@@ -71,35 +63,31 @@ def init_analysers(domains_file, include_tld, matching_option):
 
 
 def run():
-    '''
+    """
     A simple utility to query certstream and match its records to a list of
     known domains from OpenDNS.
-    '''
+    """
     epilog = '''
 examples:
-\033[1;33m/usr/bin/domain_matching.py --storage-host elasticsearch:9200 --storage elasticsearch\033[0m
+\033[1;33m/usr/bin/domain_matching.py --elasticsearch-host elasticsearch:9200\033[0m
 
-\033[1;33m/usr/bin/domain_matching.py --report-location report.txt --report file\033[0m
+\033[1;33m/usr/bin/domain_matching.py --dump-location certstream.txt\033[0m
 
 \033[1;33m/usr/bin/domain_matching.py --domains opendns-top-domains.txt\033[0m
 
-Consume data from certstream and does its magic.
+Consume data from Certstream and does its magic.
 '''
     parser = argparse.ArgumentParser(description=__doc__, epilog=epilog,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
 
     parser.add_argument('--domains',
-                        help='the list of domains to match with (opendns-top-domains.txt)')
+                        help='the list of domains to match with (e.g. opendns-top-domains.txt)')
 
-    parser.add_argument('--storage-host', default='localhost:9200',
-                        help='set the storage host')
-    parser.add_argument('-s', '--storage', default='elasticsearch',
-                        help='choose the storage type (elasticsearch)')
+    parser.add_argument('--elasticsearch-host',
+                        help='set the Elasticsearch host to store the records from Certstream')
 
-    parser.add_argument('--report-location',
-                        help='where to save the report to?')
-    parser.add_argument('-r', '--report', default='file',
-                        help='choose the reporter type')
+    parser.add_argument('--dump-location',
+                        help='where to dump the records from Certstream')
 
     try:
         args = parser.parse_args()
@@ -112,32 +100,11 @@ Consume data from certstream and does its magic.
         sys.exit(1)
 
     transformer = CertstreamTransformer()
-
-    if args.report and args.report not in SUPPORTED_REPORTERS:
-        error = 'Report type \033[1;31m{}\033[0m is not supported. The list of supported reporters includes: {}' \
-                .format(args.report, list(SUPPORTED_REPORTERS.keys()))
-
-        logging.error(error)
-        # Encounter an unsupported storage type
-        sys.exit(1)
-
-    if args.storage and args.storage not in SUPPORTED_STORAGES:
-        error = 'Storage type \033[1;31m{}\033[0m is not supported. The list of supported storages includes: {}' \
-                .format(args.storage, list(SUPPORTED_STORAGES.keys()))
-
-        logging.error(error)
-        # Encounter an unsupported storage type
-        sys.exit(1)
-
     analysers = init_analysers(domains_file=args.domains,
                                include_tld=True,
                                matching_option=DomainMatchingOption.ORDER_MATCH)
-
-    if args.report:
-        reporter = SUPPORTED_REPORTERS[args.report](args.report_location)
-
-    if args.storage:
-        storage = SUPPORTED_STORAGES[args.storage](args.storage_host)
+    reporter = FileReporter(path=args.dump_location) if args.dump_location else None
+    storage = ElasticsearchStorage(hosts=[args.elasticsearch_host]) if args.elasticsearch_host else None
 
     engine = CertstreamAnalytics(transformer=transformer,
                                  storages=storage,

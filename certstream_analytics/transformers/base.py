@@ -1,45 +1,42 @@
-'''
+"""
 Transform the certificate data from certstream before passing it to the
 processing pipeline.
-'''
-import json
-import logging
+"""
 from abc import ABCMeta, abstractmethod
 
 
 # pylint: disable=no-init,too-few-public-methods
 class Transformer:
-    '''
+    """
     Define the template of all transformer class.
-    '''
+    """
     __metaclass__ = ABCMeta
 
     @abstractmethod
     def apply(self, raw):
-        '''
+        """
         Move along, nothing to see here.
-        '''
-        pass
+        """
 
 
 class PassthroughTransformer(Transformer):
-    '''
+    """
     A dummy transformer that doesn't do anything.
-    '''
+    """
     def apply(self, raw):
-        '''
+        """
         Move along, nothing to see here.
-        '''
+        """
         return raw
 
 
 class CertstreamTransformer(Transformer):
-    '''
+    """
     Transform data from certstream into something readily consumable by the
     processing pipeline.
-    '''
+    """
     def apply(self, raw):
-        '''
+        """
         The format of the message from certstream can be found at their github
         documentation.
 
@@ -69,9 +66,7 @@ class CertstreamTransformer(Transformer):
                     },
                 ],
             }
-        '''
-        logging.debug(json.dumps(raw))
-
+        """
         filtered = {
             'cert_index': raw['data']['cert_index'],
             'seen': raw['data']['seen'],
