@@ -24,7 +24,7 @@ setup(
         'tldextract',
         'wordsegment',
         'pyenchant',
-        'idna', 
+        'idna',
         'confusable_homoglyphs'
     ],
     tests_require=[
@@ -38,6 +38,7 @@ setup(
         'https://github.com/casics/nostril/tarball/master'
     ],
     packages=find_packages(),
+    scripts=['bin/domain_matching.py'],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
