@@ -17,10 +17,11 @@ from certstream_analytics.analysers import BulkDomainMarker
 from certstream_analytics.analysers import IDNADecoder
 from certstream_analytics.analysers import HomoglyphsDecoder
 from certstream_analytics.analysers import FeaturesGenerator
-from certstream_analytics.transformers import CertstreamTransformer
 from certstream_analytics.reporters import FileReporter
+from certstream_analytics.reporters import CoNLL
 from certstream_analytics.storages import ElasticsearchStorage
 from certstream_analytics.stream import CertstreamAnalytics
+from certstream_analytics.transformers import CertstreamTransformer
 
 DONE = False
 
@@ -71,7 +72,7 @@ def run():
 examples:
 \033[1;33m/usr/bin/domain_matching.py --elasticsearch-host elasticsearch:9200\033[0m
 
-\033[1;33m/usr/bin/domain_matching.py --dump-location certstream.txt\033[0m
+\033[1;33m/usr/bin/domain_matching.py --json certstream.txt --conll conll.txt\033[0m
 
 \033[1;33m/usr/bin/domain_matching.py --domains opendns-top-domains.txt\033[0m
 
@@ -86,8 +87,11 @@ Consume data from Certstream and does its magic.
     parser.add_argument('--elasticsearch-host',
                         help='set the Elasticsearch host to store the records from Certstream')
 
-    parser.add_argument('--dump-location',
-                        help='where to dump the records from Certstream')
+    parser.add_argument('--json',
+                        help='where to dump the records from Certstream in JSON format')
+
+    parser.add_argument('--conll',
+                        help='where to dump the word segmentation output in CoNLL-U format')
 
     try:
         args = parser.parse_args()
@@ -103,13 +107,15 @@ Consume data from Certstream and does its magic.
     analysers = init_analysers(domains_file=args.domains,
                                include_tld=True,
                                matching_option=DomainMatchingOption.ORDER_MATCH)
-    reporter = FileReporter(path=args.dump_location) if args.dump_location else None
     storage = ElasticsearchStorage(hosts=[args.elasticsearch_host]) if args.elasticsearch_host else None
+
+    json_reporter = FileReporter(path=args.json) if args.json else None
+    conll_reporter = CoNLL(path=args.conll) if args.conll else None
 
     engine = CertstreamAnalytics(transformer=transformer,
                                  storages=storage,
                                  analysers=analysers,
-                                 reporters=reporter)
+                                 reporters=[json_reporter, conll_reporter])
     engine.start()
 
     while not DONE:

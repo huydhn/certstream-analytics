@@ -27,10 +27,10 @@ class FileReporter(Reporter):
         """
         Note that an exception will be raised if the path is not valid or writable.
         """
-        self.fhandler = open(path, 'a')
+        self.fhandle = open(path, 'a')
 
     def __del__(self):
-        self.fhandler.close()
+        self.fhandle.close()
 
     def publish(self, report):
         """
@@ -40,4 +40,4 @@ class FileReporter(Reporter):
         if not report:
             return
 
-        print(json.dumps(report), file=self.fhandler)
+        print(json.dumps(report), file=self.fhandle)

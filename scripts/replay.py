@@ -15,11 +15,14 @@ from certstream_analytics.analysers import IDNADecoder
 from certstream_analytics.analysers import HomoglyphsDecoder
 from certstream_analytics.analysers import FeaturesGenerator
 from certstream_analytics.reporters import FileReporter
+from certstream_analytics.reporters import CoNLL
 from certstream_analytics.storages import ElasticsearchStorage
+from certstream_analytics.transformers import CertstreamTransformer
 
 
 SUPPORTED_REPORTERS = {
-    'file': lambda location: FileReporter(path=location)
+    'file': lambda location: FileReporter(path=location),
+    'conll': lambda location: CoNLL(path=location)
 }
 
 SUPPORTED_STORAGES = {
@@ -64,9 +67,9 @@ def run():
 examples:
 \033[1;33m/usr/bin/replay.py --replay certstream.txt\033[0m
 
-\033[1;33m/usr/bin/replay.py --storage-host elasticsearch:9200 --storage elasticsearch\033[0m
+\033[1;33m/usr/bin/replay.py --storage-host elasticsearch:9200\033[0m
 
-\033[1;33m/usr/bin/replay.py --report-location report.txt --report file\033[0m
+\033[1;33m/usr/bin/domain_matching.py --json certstream.txt --conll conll.txt\033[0m
 
 \033[1;33m/usr/bin/replay.py --domains opendns-top-domains.txt\033[0m
 
@@ -77,18 +80,19 @@ Replay data from certstream.
 
     parser.add_argument('--replay',
                         help='the list of records from certstream (one per line)')
+
     parser.add_argument('--domains',
-                        help='the list of domains to match with (opendns-top-domains.txt)')
+                        help='the list of domains to match with (e.g. opendns-top-domains.txt)')
 
-    parser.add_argument('--storage-host', default='localhost:9200',
-                        help='set the storage host')
-    parser.add_argument('-s', '--storage',
-                        help='choose the storage type (elasticsearch)')
+    parser.add_argument('--elasticsearch-host',
+                        help='set the Elasticsearch host to store the records from Certstream')
 
-    parser.add_argument('--report-location',
-                        help='where to save the report to?')
-    parser.add_argument('-r', '--report', default='file',
-                        help='choose the reporter type')
+    parser.add_argument('--json',
+                        help='where to dump the records from Certstream in JSON format')
+
+    parser.add_argument('--conll',
+                        help='where to dump the word segmentation output in CoNLL-U format')
+
 
     try:
         args = parser.parse_args()
@@ -100,31 +104,14 @@ Replay data from certstream.
         # then quit
         sys.exit(1)
 
-    if args.report and args.report not in SUPPORTED_REPORTERS:
-        error = 'Report type \033[1;31m{}\033[0m is not supported. The list of supported reporters includes: {}' \
-                .format(args.report, list(SUPPORTED_REPORTERS.keys()))
-
-        logging.error(error)
-        # Encounter an unsupported storage type
-        sys.exit(1)
-
-    if args.storage and args.storage not in SUPPORTED_STORAGES:
-        error = 'Storage type \033[1;31m{}\033[0m is not supported. The list of supported storages includes: {}' \
-                .format(args.storage, list(SUPPORTED_STORAGES.keys()))
-
-        logging.error(error)
-        # Encounter an unsupported storage type
-        sys.exit(1)
-
+    transformer = CertstreamTransformer()
     analysers = init_analysers(domains_file=args.domains,
                                include_tld=True,
                                matching_option=DomainMatchingOption.ORDER_MATCH)
+    storage = ElasticsearchStorage(hosts=[args.elasticsearch_host]) if args.elasticsearch_host else None
 
-    if args.report:
-        reporter = SUPPORTED_REPORTERS[args.report](args.report_location)
-
-    if args.storage:
-        storage = SUPPORTED_STORAGES[args.storage](args.storage_host)
+    json_reporter = FileReporter(path=args.json) if args.json else None
+    conll_reporter = CoNLL(path=args.conll) if args.conll else None
 
     with open(args.replay) as fhandler:
         for raw in fhandler:
@@ -133,14 +120,21 @@ Replay data from certstream.
             except json.decoder.JSONDecodeError:
                 continue
 
-            if args.storage:
+            if storage:
                 storage.save(record)
 
+            # Clear all existing analysers
+            record['analysers'] = []
             for analyser in analysers:
                 # Run something here
                 record = analyser.run(record)
 
-            reporter.publish(record)
+            if json_reporter:
+                json_reporter.publish(record)
+
+            if conll_reporter:
+                conll_reporter.publish(record)
+
 
 if __name__ == '__main__':
     run()

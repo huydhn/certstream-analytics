@@ -9,8 +9,8 @@ import json
 import logging
 import re
 import tldextract
-import ahocorasick
 import wordsegment
+import ahocorasick
 
 from .base import Analyser
 from .common_domain_analyser import BulkDomainMarker
@@ -204,7 +204,7 @@ class DomainMatching(Analyser):
             if match not in segmentation_output:
                 continue
 
-            phish = self.option(segmentation_output[match])
+            phish = self.option([w for w in segmentation_output[match] if w != WordSegmentation.SEPARATOR])
             match_ext = tldextract.extract(match)
 
             for domain in domains:
@@ -229,7 +229,7 @@ class DomainMatching(Analyser):
                 legit = self.option(tmp)
 
                 if (isinstance(phish, set) and legit.issubset(phish)) or \
-                   (isinstance(phish, list) and '.{}'.format('.'.join(legit)) in '.'.join(phish)):
+                   (isinstance(phish, list) and '.'.join(legit) in '.'.join(phish)):
                     # Found a possible phishing domain
                     if match not in results:
                         results[match] = []

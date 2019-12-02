@@ -37,17 +37,7 @@ class WordSegmentation(Analyser):
 
     Let's see what they can do, take it away!
     """
-    # Some common stop words that are in the list of most popular domains
-    STOPWORDS = {
-        'app': 1,
-        'inc': 1,
-        'box': 1,
-        'health': 1,
-        'home': 1,
-        'space': 1,
-        'cars': 1,
-        'nature': 1,
-    }
+    SEPARATOR = 'PUNCT'
 
     def __init__(self):
         """
@@ -76,8 +66,11 @@ class WordSegmentation(Analyser):
             # We choose to segment the TLD here as well, for example, .co.uk
             # will become ['co', 'uk']. Let see if this works out.
             for part in ext[:]:
-                for token in part.split('.'):
-                    segmented = [w for w in wordsegment.segment(token) if w not in WordSegmentation.STOPWORDS]
+                if not part:
+                    continue
+
+                for token in re.split(r'\W+', part):
+                    segmented = [w for w in wordsegment.segment(token)]
 
                     if segmented:
                         words.extend(segmented)
@@ -87,7 +80,9 @@ class WordSegmentation(Analyser):
                         # the original token
                         words.append(token)
 
-            results[domain] = words
+                    words.append(WordSegmentation.SEPARATOR)
+
+            results[domain] = words[:-1]
 
         if results:
             record['analysers'].append({
@@ -299,7 +294,7 @@ class FeaturesGenerator(Analyser):
         Y_samples = []
 
         for analyser in record['analysers']:
-            if analyser['analyser'] != 'WordSegmentation':
+            if analyser['analyser'] != WordSegmentation.__name__:
                 continue
 
             for domain, segments in analyser['output'].items():
@@ -331,6 +326,9 @@ class FeaturesGenerator(Analyser):
                 # in the domain only returns a boolean verdict so may be we need to
                 # think of how we want to quantify this
                 for w in segments:
+                    if w == WordSegmentation.SEPARATOR:
+                        continue
+
                     try:
                         if len(w) >= FeaturesGenerator.NOSTRIL_LENGTH_LIMIT and nonsense(w):
                             randomness_count += 1
