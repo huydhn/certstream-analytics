@@ -136,8 +136,8 @@ class DomainMatchingTest(unittest.TestCase):
                     {
                         'analyser': 'WordSegmentation',
                         'output': {
-                            'store.google.com': ['store', 'google', 'com'],
-                            'google.com': ['google', 'com'],
+                            'store.google.com': ['store', 'PUNCT', 'google', 'PUNCT', 'com'],
+                            'google.com': ['google', 'PUNCT', 'com'],
                         },
                     },
                 ],
@@ -154,7 +154,17 @@ class DomainMatchingTest(unittest.TestCase):
                     {
                         'analyser': 'WordSegmentation',
                         'output': {
-                            'www.facebook.com.msg40.site': ['www', 'facebook', 'com', 'msg40', 'site'],
+                            'www.facebook.com.msg40.site': [
+                                'www',
+                                'PUNCT',
+                                'facebook',
+                                'PUNCT',
+                                'com',
+                                'PUNCT',
+                                'msg40',
+                                'PUNCT',
+                                'site'
+                            ],
                         },
                     },
                 ],
@@ -173,12 +183,17 @@ class DomainMatchingTest(unittest.TestCase):
                         'output': {
                             'login-appleid.apple.com.managesuppport.co': [
                                 'login',
+                                'PUNCT',
                                 'apple',
                                 'id',
+                                'PUNCT',
                                 'apple',
+                                'PUNCT',
                                 'com',
+                                'PUNCT',
                                 'manage',
                                 'suppport',
+                                'PUNCT',
                                 'co'
                             ],
                         },
@@ -197,7 +212,14 @@ class DomainMatchingTest(unittest.TestCase):
                     {
                         'analyser': 'WordSegmentation',
                         'output': {
-                            'arch.mappleonline.com': ['arch', 'm', 'apple', 'online', 'com'],
+                            'arch.mappleonline.com': [
+                                'arch',
+                                'PUNCT',
+                                'm',
+                                'apple',
+                                'online',
+                                'PUNCT',
+                                'com'],
                         },
                     },
                 ],
@@ -214,7 +236,14 @@ class DomainMatchingTest(unittest.TestCase):
                     {
                         'analyser': 'WordSegmentation',
                         'output': {
-                            'www.freybrothersinc.com': ['www', 'frey', 'brothers', 'com'],
+                            'www.freybrothersinc.com': [
+                                'www',
+                                'PUNCT',
+                                'frey',
+                                'brothers',
+                                'inc',
+                                'PUNCT',
+                                'com'],
                         },
                     },
                 ],

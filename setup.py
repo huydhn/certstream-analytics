@@ -1,6 +1,6 @@
-'''
+"""
 Standard Python setup script.
-'''
+"""
 
 from setuptools import setup, find_packages
 
@@ -25,7 +25,8 @@ setup(
         'wordsegment',
         'pyenchant',
         'idna',
-        'confusable_homoglyphs'
+        'confusable_homoglyphs',
+        'nltk'
     ],
     tests_require=[
         'coverage',

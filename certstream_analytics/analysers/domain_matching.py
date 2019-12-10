@@ -229,7 +229,7 @@ class DomainMatching(Analyser):
                 legit = self.option(tmp)
 
                 if (isinstance(phish, set) and legit.issubset(phish)) or \
-                   (isinstance(phish, list) and '.'.join(legit) in '.'.join(phish)):
+                   (isinstance(phish, list) and f".{'.'.join(legit)}" in '.'.join(phish)):
                     # Found a possible phishing domain
                     if match not in results:
                         results[match] = []

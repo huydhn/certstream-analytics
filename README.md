@@ -15,8 +15,8 @@ pip install certstream-analytics
 
 # Quick usage
 
-```python
-bin/domain_matching.py --domains domains.txt --dump-location certstream.txt
+```bash
+domain_matching.py --domains domains.txt --json certstream.txt
 
 # The file domains.txt contains the list of domains that we want to monitor
 # for matches (domains with similar names). For examples, a file with only
@@ -65,8 +65,8 @@ transformer = CertstreamTransformer()
 storage = ElasticsearchStorage(hosts=['localhost:9200'])
 
 consumer = CertstreamAnalytics(transformer=transformer,
-                               storage=storage,
-                               analyser=analyser)
+                               storages=storage,
+                               analysers=analyser)
 # The consumer is run in another thread so this function is non-blocking
 consumer.start()
 
@@ -109,7 +109,7 @@ generate all potential alternative domain names in ASCII.
 from certstream_analytics.analysers import HomoglyphsDecoder
 
 # If the greedy flag is set, all alternative domains will be returned
-decoder = HomoglyphsDecoder(greed=False)
+decoder = HomoglyphsDecoder(greedy=False)
 
 # Just an example dummy record
 record = {
@@ -136,29 +136,32 @@ will match with *facebook* cause *facebook* is in the above list of most
 popular domains (I wonder how long it is going to last).
 
 ```python
-from certstream_analytics.analysers import AhoCorasickDomainMatching
-from certstream_analytics.reporter import FileReporter
+import time
 
+from certstream_analytics.analysers import AhoCorasickDomainMatching
+from certstream_analytics.reporters import FileReporter
+from certstream_analytics.stream import CertstreamAnalytics
+from certstream_analytics.transformers import CertstreamTransformer
+
+transformer = CertstreamTransformer()
 # Print the list of matching domains
 reporter = FileReporter('matching-results.txt')
 
-with open('opendns-top-domains.txt')) as fhandle:
+with open('opendns-top-domains.txt') as fhandle:
     domains = [line.rstrip() for line in fhandle]
 
 # The list of domains to match against
 domain_matching_analyser = AhoCorasickDomainMatching(domains)
 
 consumer = CertstreamAnalytics(transformer=transformer,
-                               analyser=domain_matching_analyser,
-                               reporter=reporter)
+                               analysers=domain_matching_analyser,
+                               reporters=reporter)
 
 # Need to think about what to do with the matching result
 consumer.start()
 
-while not done:
+while True:
     time.sleep(1)
-
-consumer.stop()
 ```
 
 ## Word segmentation
@@ -169,7 +172,7 @@ the domains into English words using
 ```python
 from certstream_analytics.analysers import WordSegmentation
 
-wordsegmentation = WordSegmentation()
+word_segmentation = WordSegmentation()
 
 # Just an example dummy record
 record = {
@@ -195,7 +198,7 @@ record = {
 #     ],
 # },
 #
-print(decoder.run(record))
+print(word_segmentation.run(record))
 ```
 
 ## Features generator
