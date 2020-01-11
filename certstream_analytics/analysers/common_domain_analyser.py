@@ -16,8 +16,7 @@ from confusable_homoglyphs import confusables
 from .base import Analyser
 
 
-# pylint: disable=too-few-public-methods
-class WordSegmentation(Analyser):
+class WordSegmentation(Analyser): # pylint: disable=too-few-public-methods
     """
     Perform word segmentation of all the SAN domains as an attempt to make sense
     of their names. For example, both arch.mappleonline.com and apple-verifyupdate.serveftp.com
@@ -70,7 +69,7 @@ class WordSegmentation(Analyser):
                     continue
 
                 for token in re.split(r'\W+', part):
-                    segmented = [w for w in wordsegment.segment(token)]
+                    segmented = wordsegment.segment(token)
 
                     if segmented:
                         words.extend(segmented)
@@ -93,7 +92,7 @@ class WordSegmentation(Analyser):
         return record
 
 
-class BulkDomainMarker(Analyser):
+class BulkDomainMarker(Analyser): # pylint: disable=too-few-public-methods
     """
     Mark the record that has tons of SAN domains in it. Most of the time, they are
     completely unrelated domains and probably the result of some bulk registration
@@ -129,7 +128,7 @@ class BulkDomainMarker(Analyser):
         return record
 
 
-class IDNADecoder(Analyser):
+class IDNADecoder(Analyser): # pylint: disable=too-few-public-methods
     """
     Decode all domains in IDNA format.
     """
@@ -167,7 +166,7 @@ class IDNADecoder(Analyser):
         return record
 
 
-class HomoglyphsDecoder(Analyser):
+class HomoglyphsDecoder(Analyser): # pylint: disable=too-few-public-methods
     """
     Smartly convert domains whose names include some suspicious homoglyphs to
     ASCII.  This will probably need to be right done after IDNA conversion and
@@ -270,7 +269,7 @@ class HomoglyphsDecoder(Analyser):
                                                        current + alt_c)
 
 
-class FeaturesGenerator(Analyser):
+class FeaturesGenerator(Analyser): # pylint: disable=too-few-public-methods
     """
     Generate features to detect outliers in the stream. In our case, the outliers is
     the 'suspicious' phishing domains.

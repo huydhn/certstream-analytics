@@ -4,6 +4,7 @@ Analyse the certificate data from certstream.
 import json
 import logging
 from abc import ABCMeta, abstractmethod
+from typing import Dict
 
 
 # pylint: disable=no-init,too-few-public-methods
@@ -14,7 +15,7 @@ class Analyser:
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def run(self, record):
+    def run(self, record: Dict) -> Dict:
         """
         In normal cases, an analyser will process the record, save the result
         into the record, and then return the updated record so that the next
@@ -56,10 +57,10 @@ class Debugger(Analyser):
         """
         self.count = 0
 
-    def run(self, record):
-        '''
+    def run(self, record: Dict) -> Dict:
+        """
         This is a dummy analyser that will only print out the record it processes.
-        '''
+        """
         logging.info(json.dumps(record))
 
         # Update the number of records so far

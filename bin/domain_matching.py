@@ -17,6 +17,7 @@ from certstream_analytics.analysers import BulkDomainMarker
 from certstream_analytics.analysers import IDNADecoder
 from certstream_analytics.analysers import HomoglyphsDecoder
 from certstream_analytics.analysers import FeaturesGenerator
+from certstream_analytics.analysers import BrandRecognition
 from certstream_analytics.reporters import FileReporter
 from certstream_analytics.reporters import CoNLL
 from certstream_analytics.storages import ElasticsearchStorage
@@ -26,13 +27,11 @@ from certstream_analytics.transformers import CertstreamTransformer
 DONE = False
 
 
-# pylint: disable=unused-argument
-def exit_gracefully(signum, stack):
+def exit_gracefully(signum, stack): # pylint: disable=unused-argument
     """
     Just to be nice.
     """
-    # pylint: disable=global-statement
-    global DONE
+    global DONE # pylint: disable=global-statement
     DONE = True
 
 
@@ -60,6 +59,7 @@ def init_analysers(domains_file, include_tld, matching_option):
         BulkDomainMarker(),
         DomainMatching(include_tld=include_tld, option=matching_option),
         FeaturesGenerator(),
+        BrandRecognition(model_path='debug/data/final-model.pt'),
     ]
 
 

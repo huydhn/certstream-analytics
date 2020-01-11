@@ -17,8 +17,7 @@ from .common_domain_analyser import BulkDomainMarker
 from .common_domain_analyser import WordSegmentation
 
 
-# pylint: disable=too-few-public-methods
-class AhoCorasickDomainMatching(Analyser):
+class AhoCorasickDomainMatching(Analyser): # pylint: disable=too-few-public-methods
     """
     The domain and its SAN will be compared against the list of domains, for
     example, the most popular domains from OpenDNS.
@@ -120,7 +119,7 @@ class DomainMatchingOption(Enum):
     ORDER_MATCH = 1
 
 
-class DomainMatching(Analyser):
+class DomainMatching(Analyser): # pylint: disable=too-few-public-methods
     """
     This is the first example of the new group of meta analysers which are used
     to combine the result of other analysers.

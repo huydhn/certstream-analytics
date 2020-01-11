@@ -26,7 +26,8 @@ setup(
         'pyenchant',
         'idna',
         'confusable_homoglyphs',
-        'nltk'
+        'nltk',
+        'flair',
     ],
     tests_require=[
         'coverage',

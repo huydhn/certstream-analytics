@@ -7,3 +7,4 @@ from .common_domain_analyser import BulkDomainMarker
 from .common_domain_analyser import FeaturesGenerator
 from .common_domain_analyser import IDNADecoder
 from .common_domain_analyser import HomoglyphsDecoder
+from .ner import BrandRecognition
