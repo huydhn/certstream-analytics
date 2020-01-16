@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-'''
+"""
 Replay a stream of records from certstream to test the processing pipeline.
-'''
+"""
 import argparse
 import json
 import logging
@@ -31,7 +31,7 @@ SUPPORTED_STORAGES = {
 
 
 def init_analysers(domains_file, include_tld, matching_option):
-    '''
+    """
     Initialize all the analysers for matching domains. The list includes:
 
     - IDNA
@@ -40,7 +40,7 @@ def init_analysers(domains_file, include_tld, matching_option):
     - Word segmentation
     - Bulk domains
     - Meta domain matching
-    '''
+    """
     with open(domains_file) as fhandle:
         domains = [line.rstrip() for line in fhandle]
 
@@ -58,18 +58,18 @@ def init_analysers(domains_file, include_tld, matching_option):
 
 
 def run():
-    '''
+    """
     A simple utility to replay certstream and match the records to a list of
     known domains from OpenDNS. It also generates several features for each
     domain such as the domain length.
-    '''
+    """
     epilog = '''
 examples:
 \033[1;33m/usr/bin/replay.py --replay certstream.txt\033[0m
 
 \033[1;33m/usr/bin/replay.py --storage-host elasticsearch:9200\033[0m
 
-\033[1;33m/usr/bin/domain_matching.py --json certstream.txt --conll conll.txt\033[0m
+\033[1;33m/usr/bin/replay.py --json certstream.txt --conll conll.txt\033[0m
 
 \033[1;33m/usr/bin/replay.py --domains opendns-top-domains.txt\033[0m
 
@@ -96,8 +96,7 @@ Replay data from certstream.
 
     try:
         args = parser.parse_args()
-    # pylint: disable=broad-except
-    except Exception as error:
+    except Exception as error: # pylint: disable=broad-except
         logging.error(error)
         # some errors occur when parsing the arguments, show the usage
         parser.print_help()

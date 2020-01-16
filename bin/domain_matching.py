@@ -95,8 +95,7 @@ Consume data from Certstream and does its magic.
 
     try:
         args = parser.parse_args()
-    # pylint: disable=broad-except
-    except Exception as error:
+    except Exception as error: # pylint: disable=broad-except
         logging.error(error)
         # some errors occur when parsing the arguments, show the usage
         parser.print_help()
