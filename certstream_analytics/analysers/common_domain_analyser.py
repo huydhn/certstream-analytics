@@ -16,7 +16,7 @@ from confusable_homoglyphs import confusables
 from .base import Analyser
 
 
-class WordSegmentation(Analyser): # pylint: disable=too-few-public-methods
+class WordSegmentation(Analyser):  # pylint: disable=too-few-public-methods
     """
     Perform word segmentation of all the SAN domains as an attempt to make sense
     of their names. For example, both arch.mappleonline.com and apple-verifyupdate.serveftp.com
@@ -92,7 +92,7 @@ class WordSegmentation(Analyser): # pylint: disable=too-few-public-methods
         return record
 
 
-class BulkDomainMarker(Analyser): # pylint: disable=too-few-public-methods
+class BulkDomainMarker(Analyser):  # pylint: disable=too-few-public-methods
     """
     Mark the record that has tons of SAN domains in it. Most of the time, they are
     completely unrelated domains and probably the result of some bulk registration
@@ -128,7 +128,7 @@ class BulkDomainMarker(Analyser): # pylint: disable=too-few-public-methods
         return record
 
 
-class IDNADecoder(Analyser): # pylint: disable=too-few-public-methods
+class IDNADecoder(Analyser):  # pylint: disable=too-few-public-methods
     """
     Decode all domains in IDNA format.
     """
@@ -166,7 +166,7 @@ class IDNADecoder(Analyser): # pylint: disable=too-few-public-methods
         return record
 
 
-class HomoglyphsDecoder(Analyser): # pylint: disable=too-few-public-methods
+class HomoglyphsDecoder(Analyser):  # pylint: disable=too-few-public-methods
     """
     Smartly convert domains whose names include some suspicious homoglyphs to
     ASCII.  This will probably need to be right done after IDNA conversion and
@@ -269,15 +269,14 @@ class HomoglyphsDecoder(Analyser): # pylint: disable=too-few-public-methods
                                                        current + alt_c)
 
 
-class FeaturesGenerator(Analyser): # pylint: disable=too-few-public-methods
+class FeaturesGenerator(Analyser):  # pylint: disable=too-few-public-methods
     """
     Generate features to detect outliers in the stream. In our case, the outliers is
     the 'suspicious' phishing domains.
     """
     NOSTRIL_LENGTH_LIMIT = 6
 
-    # pylint: disable=invalid-name
-    def run(self, record):
+    def run(self, record):  # pylint: disable=invalid-name
         """
         The list of features will be:
         - The number of domain parts, for example, www.google.com is 3.
@@ -302,12 +301,8 @@ class FeaturesGenerator(Analyser): # pylint: disable=too-few-public-methods
 
                 parts = domain.split('.')
 
-                x = []
-                # Compute the number of domain parts
-                x.append(len(parts))
-
-                # Compute the length of the whole domain
-                x.append(len(domain))
+                # Compute the number of domain parts and the length of the whole domain
+                x = [len(parts), len(domain)]
 
                 longest = ''
                 # Compute the length of the longest domain parts
